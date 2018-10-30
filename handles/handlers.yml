@@ -1,0 +1,11 @@
+application: plover
+version: 1.0
+api_version: 1
+
+handlers:
+- url: /
+  handler: handles.base.MainHandler
+- url: /(.*\..*$)
+  handler: handles.base.StaticHandler
+- url: /api/user
+  handler: handles.user.UserHandler

@@ -4,18 +4,21 @@
 """
 Created on 2018/10/16
 
-Author: hedong.zhang@woqutech.com
+Author: 
 
 Description: 
 
 """
+
 import json
 
-import tornado
-from tornado import web, httpserver, ioloop
-from tornado.options import define, options
+import tornado.httpserver
+import tornado.ioloop
+import tornado.options
+import tornado.web
 
-define("port", default=443, help="run on the given port", type=int)
+import application
+from utiles import config
 
 
 class IndexHandler(tornado.web.RequestHandler):
@@ -36,12 +39,24 @@ class IndexHandler(tornado.web.RequestHandler):
         self.write(json.dumps(dict(ret_code=0, status="success", open_id=open_id, name=name)))
 
 
-if __name__ == "__main__":
-    tornado.options.parse_command_line()
-    app = tornado.web.Application(handlers=[(r"/user", IndexHandler)])
+class CopywritingHandler(tornado.web.RequestHandler):
+    def get(self):
+        data = dict(master_title="这次，不需要自己拿",
+                    master_desc="即使再忙，也别太累",
+                    master_banner="同学帮送，快速送达",
+                    slave_title="这次，赚点零花钱",
+                    slave_desc="空闲之余，也有所得")
+        returm_data = dict(return_code=0, message="返回相关文案", data=data)
+        self.write(returm_data)
 
-    ssl_options = dict(certfile="./conf/server.crt", keyfile="./conf/server.key")
+
+def main():
+    app = application.Application()
+    ssl_options = dict(certfile=config.get("certfile"), keyfile=config.get("keyfile"))
     http_server = tornado.httpserver.HTTPServer(app, ssl_options=ssl_options)
-    http_server.listen(options.port)
-
+    http_server.listen(config.get("https_listen_port"))
     tornado.ioloop.IOLoop.instance().start()
+
+
+if __name__ == "__main__":
+    main()

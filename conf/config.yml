@@ -1,0 +1,5 @@
+# server config
+https_listen_port: 443
+
+certfile: "./conf/server.crt"
+keyfile: "./conf/server.key"
