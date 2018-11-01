@@ -3,3 +3,6 @@ https_listen_port: 443
 
 certfile: "./conf/server.crt"
 keyfile: "./conf/server.key"
+
+# database
+engine_str: 'mysql+mysqlconnector://root:ploverpassword@localhost:3306/plover'

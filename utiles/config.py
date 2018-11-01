@@ -14,7 +14,7 @@ import yaml
 
 
 class Config(object):
-    def __init__(self, file="./conf/config.yml"):
+    def __init__(self, file="/root/plover/conf/config.yml"):
         self._file = file
         self._config = self.read()
 
