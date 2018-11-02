@@ -98,7 +98,7 @@ class ModelMixin(object):
     def to_dict(self):
         """返回一个dict格式"""
         import builtins
-        builtin_types = [t for t in builtins.__dict__.itervalues() if isinstance(t, type)]
+        builtin_types = [t for t in builtins.__dict__.values() if isinstance(t, type)]
         builtin_types.append(datetime)
 
         result = dict()

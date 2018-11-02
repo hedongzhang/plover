@@ -23,7 +23,7 @@ class MainHandler(tornado.web.RequestHandler):
 class StaticHandler(tornado.web.StaticFileHandler):
     def __init__(self, application, request, **kwargs):
         kwargs['path'] = config.get("static_path")
-        super(StaticHanler, self).__init__(application, request, **kwargs)
+        super(StaticHandler, self).__init__(application, request, **kwargs)
 
     def data_received(self, chunk):
         pass

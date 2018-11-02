@@ -63,5 +63,5 @@ class Application(tornado.web.Application):
             module = __import__(mod_path, fromlist=[cls_name])
             return getattr(module, cls_name, None)
         except Exception as e:
-            logging.exception("Import module: {nodule} error: {error}".format(nodule=mod_path, error=e))
+            logger.exception("Import module: {nodule} error: {error}".format(nodule=mod_path, error=e))
             return None

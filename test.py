@@ -19,4 +19,4 @@ if __name__ == "__main__":
     with open_session() as session:
         users = session.query(PLUser).all()
         for user in users:
-            logger.warn(user.to_dict)
+            logger.warn(user.to_dict())
