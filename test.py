@@ -14,9 +14,9 @@ Description:
 if __name__ == "__main__":
     from model.base import open_session
     from utiles import logger
-    from  model.schema import PLUser
+    from  model.schema import *
 
     with open_session() as session:
-        users = session.query(PLUser).all()
+        users = session.query(User).all()
         for user in users:
             logger.warn(user.to_dict())
