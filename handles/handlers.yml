@@ -7,5 +7,7 @@ handlers:
   handler: handles.base.MainHandler
 - url: /(.*\..*$)
   handler: handles.base.StaticHandler
+- url: /api/login
+  handler: handles.login.LoginHandler
 - url: /api/user
   handler: handles.user.UserHandler
