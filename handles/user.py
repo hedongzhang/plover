@@ -45,7 +45,7 @@ class UserHandler(BasicHandler):
 
                 data = dict()
                 data["id"] = user.id
-                data["nick_name"] = user.nickname
+                data["nick_name"] = user.nick_name
                 data["first_name"] = user.first_name
                 data["last_name"] = user.last_name
                 data["phone"] = user.phone
@@ -66,7 +66,7 @@ class UserHandler(BasicHandler):
 
             with open_session() as session:
                 user = session.query(User).filter(User.id == request_args["user_id"]).one()
-                user.nickname = user_info["nickName"]
+                user.nick_name = user_info["nick_name"]
                 user.avatar_url = user_info["avatarUrl"]
                 user.gender = user_info["gender"]
 
@@ -103,7 +103,7 @@ class UsersHandler(BasicHandler):
                 for user in query.all():
                     user_info = dict()
                     user_info["id"] = user.id
-                    user_info["nick_name"] = user.nickname
+                    user_info["nick_name"] = user.nick_name
                     user_info["first_name"] = user.first_name
                     user_info["last_name"] = user.last_name
                     user_info["state"] = user.state

@@ -13,5 +13,11 @@ handlers:
   handler: handles.user.UserHandler
 - url: /api/users
   handler: handles.user.UsersHandler
+- url: /api/user/address
+  handler: handles.address.AddressHandler
+- url: /api/user/addresses
+  handler: handles.address.AddressesHandler
+- url: /api/user/address/default
+  handler: handles.address.AddressDefaultHandler
 - url: /api/copywriting
   handler: handles.copywriting.CopywritingHandler

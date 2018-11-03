@@ -12,7 +12,7 @@ Description:
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, DateTime, Boolean, String, Float
+from sqlalchemy import Column, Integer, DateTime, Boolean, String, Float, DECIMAL
 
 from model.base import Entity
 
@@ -37,7 +37,7 @@ class User(Entity):
     openid = Column(Integer, nullable=False, unique=True, doc="微信用户的openid")
     unionid = Column(Integer, nullable=False, unique=True, doc="微信用户的unionid")
     balance_id = Column(Integer, nullable=False, unique=True, doc="账户id, -1表示刚刚注册，在创建账户时中断")
-    nickname = Column(String(length=64), doc="昵称")
+    nick_name = Column(String(length=64), doc="昵称")
     avatar_url = Column(String(length=256), doc="头像URL")
     gender = Column(Integer, nullable=False, doc="性别: 0-未知, 1-男, 2-女")
     first_name = Column(String(length=64), doc="名")
@@ -105,6 +105,7 @@ class Address(Entity):
     PROPERTY_PUBLIC = 2
 
     user_id = Column(Integer, nullable=False, doc="用户id")
+    nick_name = Column(String(length=64), doc="昵称")
     type = Column(Integer, nullable=False, default=0, doc="类型: 0-取货地址, 1-收货地址")
     property = Column(Integer, nullable=False, doc="属性: 0-女性场所, 1-男性场所, 2-公共场所")
     first_name = Column(String(length=64), doc="名")
@@ -112,9 +113,9 @@ class Address(Entity):
     phone = Column(String(length=16), doc="手机号")
     first_address = Column(String(length=256), doc="大致地址")
     last_address = Column(String(length=256), doc="详细地址")
+    latitude = Column(Float(32), nullable=False, doc="纬度")
+    longitude = Column(Float(32), nullable=False, doc="经度")
     default = Column(Boolean, nullable=False, doc="是否为默认地址")
-    latitude = Column(Float, nullable=False, doc="纬度")
-    longitude = Column(Float, nullable=False, doc="经度")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
@@ -131,8 +132,8 @@ class Balance(Entity):
     STATE_NORMAL = 1
 
     user_id = Column(Integer, nullable=False, unique=True, doc="用户id")
-    amount = Column(Float, nullable=False, doc="账户余额")
-    deposit = Column(Float, nullable=False, doc="押金")
+    amount = Column(DECIMAL(10,2), nullable=False, doc="账户余额")
+    deposit = Column(DECIMAL(10,2), nullable=False, doc="押金")
     state = Column(Integer, nullable=False, doc="状态: 0-冻结, 1-正常")
 
     description = Column(String(length=256), doc="备注")
@@ -157,8 +158,8 @@ class Order(Entity):
     master_id = Column(Integer, nullable=False, doc="雇主id")
     slave_id = Column(Integer, nullable=False, doc="佣兵id")
     takeaway_id = Column(Integer, nullable=False, doc="外卖id")
-    amount = Column(Float, nullable=False, doc="订单金额")
-    tip = Column(Float, nullable=False, doc="小费")
+    amount = Column(DECIMAL(10,2), nullable=False, doc="订单金额")
+    tip = Column(DECIMAL(10,2), nullable=False, doc="小费")
     verification_code = Column(String(length=64), nullable=False, doc="验证码")
     state = Column(Integer, nullable=False, doc="状态: 0-未支付，1-未接单，2-已接单，3-配送中，4-已送达, 5-完成, 6-已取消")
     order_time = Column(DateTime, default=datetime.now, doc="接单时间utc")
@@ -205,8 +206,8 @@ class Transaction_order(Entity):
     order_id = Column(Integer, nullable=False, doc="订单id")
     wx_transaction_id = Column(Integer, nullable=False, doc="订单id")
     type = Column(Integer, nullable=False, doc="0-雇主下单，1-佣兵收款，2-雇主取消订单")
-    amount = Column(Float, nullable=False, doc="交易金额")
-    commission = Column(Float, nullable=False, doc="平台佣金")
+    amount = Column(DECIMAL(10,2), nullable=False, doc="交易金额")
+    commission = Column(DECIMAL(10,2), nullable=False, doc="平台佣金")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
@@ -228,7 +229,7 @@ class Transaction_non_order(Entity):
     user_id = Column(Integer, nullable=False, doc="用户id")
     wx_transaction_id = Column(Integer, nullable=False, doc="订单id")
     type = Column(Integer, nullable=False, doc="0-管理员操作, 1-缴纳押金，2-退还押金，3-存入账户，4-从账户提现")
-    amount = Column(Float, nullable=False, doc="交易金额")
+    amount = Column(DECIMAL(10,2), nullable=False, doc="交易金额")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
