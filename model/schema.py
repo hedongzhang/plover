@@ -82,6 +82,7 @@ class Message(Entity):
     TYPE_NORMAL = 0
 
     user_id = Column(Integer, nullable=False, doc="用户id")
+    title = Column(String(length=64), doc="标题")
     context = Column(String(length=512), doc="内容")
     type = Column(Integer, nullable=False, default=0, doc="类型: 0-一般消息")
     state = Column(Integer, nullable=False, doc="状态: 0-未读, 1-已读")

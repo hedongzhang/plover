@@ -19,5 +19,12 @@ handlers:
   handler: handles.address.AddressesHandler
 - url: /api/user/address/default
   handler: handles.address.AddressDefaultHandler
+- url: /api/user/message
+  handler: handles.message.MessageHandler
+- url: /api/user/messages
+  handler: handles.message.MessagesHandler
+- url: /api/user/balance
+  handler: handles.balance.BalanceHandler
+
 - url: /api/copywriting
   handler: handles.copywriting.CopywritingHandler
