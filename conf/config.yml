@@ -9,4 +9,4 @@ engine_str: "mysql+mysqlconnector://root:ploverpassword@localhost:3306/plover"
 
 
 # winxi api
-code2session_url: "GET https://api.weixin.qq.com/sns/jscode2session"
+code2session_url: "https://api.weixin.qq.com/sns/jscode2session"

@@ -30,6 +30,10 @@ def get(url, args, timeout=60):
         http_request = httpclient.HTTPRequest(url=url, method="GET", request_timeout=timeout)
         response = http_client.fetch(http_request)
         return json.loads(response.body)
+
+        # ret_data = dict(errcode=0, openid=32456, session_key="cdsvref2HJFDFcdsc12", unionid=756243)
+        # return ret_data
+
     finally:
         http_client.close()
 

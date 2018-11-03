@@ -62,7 +62,8 @@ class Session(Entity):
     __tablename__ = "session"
 
     user_id = Column(Integer, nullable=False, unique=True, doc="用户id")
-    weixin_session_key = Column(Integer, nullable=False, unique=True, doc="微信登录session")
+    session_id = Column(String(length=128), nullable=False, doc="用户session_id")
+    wx_session_key = Column(String(length=128), nullable=False, unique=True, doc="微信登录session")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
@@ -202,7 +203,7 @@ class Transaction_order(Entity):
 
     user_id = Column(Integer, nullable=False, doc="用户id")
     order_id = Column(Integer, nullable=False, doc="订单id")
-    weixin_transaction_id = Column(Integer, nullable=False, doc="订单id")
+    wx_transaction_id = Column(Integer, nullable=False, doc="订单id")
     type = Column(Integer, nullable=False, doc="0-雇主下单，1-佣兵收款，2-雇主取消订单")
     amount = Column(Float, nullable=False, doc="交易金额")
     commission = Column(Float, nullable=False, doc="平台佣金")
@@ -225,7 +226,7 @@ class Transaction_non_order(Entity):
     TYPE_WITHDRAW_CASH = 4
 
     user_id = Column(Integer, nullable=False, doc="用户id")
-    weixin_transaction_id = Column(Integer, nullable=False, doc="订单id")
+    wx_transaction_id = Column(Integer, nullable=False, doc="订单id")
     type = Column(Integer, nullable=False, doc="0-管理员操作, 1-缴纳押金，2-退还押金，3-存入账户，4-从账户提现")
     amount = Column(Float, nullable=False, doc="交易金额")
 
