@@ -47,7 +47,7 @@ class BasicHandler(tornado.web.RequestHandler):
         message = RESPONSE_MESSAGE_SERVER_ERROR.format(error_message=message)
         self.response(status, message)
 
-    def get_request_args(self, necessary_list=None):
+    def post_request_args(self, necessary_list=None):
         request_context = json.loads(self.request.body)
         self.session_id = request_context.get("session_id")
         self.request_args = request_context.get("post_vars")
@@ -58,6 +58,7 @@ class BasicHandler(tornado.web.RequestHandler):
                     raise Exception("请求缺少必要的参数")
 
         return self.request_args
+
 
     def data_received(self, chunk):
         pass
