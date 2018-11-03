@@ -21,4 +21,4 @@ class CopywritingHandler(BasicHandler):
                     master_banner="同学帮送，快速送达",
                     slave_title="这次，赚点零花钱",
                     slave_desc="空闲之余，也有所得")
-        self.response(RESPONSE_STATUS_SUCESS, RESPONSE_MESSAGE_SUCESS, data=data)
+        self.response(data=data)

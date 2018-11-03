@@ -10,15 +10,10 @@ Description:
 
 """
 
-import random
-import string
-
 from tornado import gen
 
 from handles.base import executor, BasicHandler
-from handles.base import RESPONSE_STATUS_SERVER_ERROR, RESPONSE_MESSAGE_SERVER_ERROR, RESPONSE_STATUS_SUCESS, \
-    RESPONSE_MESSAGE_SUCESS
-from utiles import config, httpclient
+from utiles import config, httpclient, random_tool
 from model.base import open_session
 from model.schema import User, Balance, Session
 
@@ -27,25 +22,24 @@ class LoginHandler(BasicHandler):
     @gen.coroutine
     def post(self):
         try:
-            request_context = self.get_request_args(necessary_list=["secret", "js_code", "appid"])
-            code2session_request = dict()
-            code2session_request["appid"] = request_context["appid"]
-            code2session_request["secret"] = request_context["secret"]
-            code2session_request["js_code"] = request_context["js_code"]
-            code2session_request["grant_type"] = "authorization_code"
+            necessary_list = ["appid", "secret", "js_code"]
+            request_context = self.get_request_args(necessary_list)
+            request_context["grant_type"] = "authorization_code"
 
-            code2session_response = yield executor.submit(httpclient.get, url=config.get("code2session_url"),
-                                                          args=code2session_request)
+            # code2session_response = yield executor.submit(httpclient.get, url=config.get("code2session_url"),
+            #                                               args=request_context)
+
+            code2session_response = dict(errcode=0, openid=random_tool.random_int(1024 * 1024 * 1024),
+                                         session_key=random_tool.random_string(),
+                                         unionid=random_tool.random_int(1024 * 1024 * 1024))
+
             if code2session_response["errcode"] == 0:
                 self.user_login(code2session_response)
             else:
-                self.response(RESPONSE_STATUS_SERVER_ERROR,
-                              RESPONSE_MESSAGE_SERVER_ERROR.format(
-                                  error_message="微信API服务访问失败({errcode}:{errmsg})".format(**code2session_response)))
+                self.response_error("微信API服务访问失败({errcode}:{errmsg})".format(**code2session_response))
 
         except Exception as e:
-            self.response(RESPONSE_STATUS_SERVER_ERROR,
-                          RESPONSE_MESSAGE_SERVER_ERROR.format(error_message=e))
+            self.response_error(e)
 
     def user_login(self, code2session_response):
         data = dict()
@@ -65,9 +59,10 @@ class LoginHandler(BasicHandler):
 
                 balance = Balance(user_id=user.id, amount=0, deposit=0, state=Balance.STATE_NORMAL)
                 session.add(balance)
-            data["user_id"] = user.id
+                session.flush()
+                user.balance_id = balance.id
 
-            session_id = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(32))
+            session_id = random_tool.random_string()
             user_session = session.query(Session).filter(Session.user_id == user.id).one_or_none()
             # 用户未登录过
             if not user_session:
@@ -77,9 +72,11 @@ class LoginHandler(BasicHandler):
                 user_session.session_id = session_id
                 user_session.wx_session_key = session_key
                 user.status = User.STATUS_LOGIN
+
+            data["user_id"] = user.id
             data["session_id"] = session_id
 
-        self.response(RESPONSE_STATUS_SUCESS, RESPONSE_MESSAGE_SUCESS, data=data)
+        self.response(data=data)
 
     def data_received(self, chunk):
         pass

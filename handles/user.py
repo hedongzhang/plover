@@ -13,6 +13,8 @@ Description:
 import json
 
 from handles.base import BasicHandler
+from model.base import open_session
+from model.schema import User
 
 
 class UserHandler(BasicHandler):
@@ -23,18 +25,18 @@ class UserHandler(BasicHandler):
 
     def post(self):
         try:
-            request_context = self.get_request_args(["session_id", "post_vars"])
-            session_id = request_context.get("session_id")
-            post_vars = request_context.get("post_vars")
+            necessary_list = ["user_id", "user_info", "raw_data", "signature", "encrypted_data", "iv"]
+            request_args = self.get_request_args(necessary_list=necessary_list)
+            user_info = json.loads(request_args["user_info"])
 
-            result = dict()
-            result["status"] = 200
-            result["message"] = "注册用户成功!"
-            result["date"] = dict()
-            self.write(json.dumps(result))
+            with open_session() as session:
+                user = session.query(User).filter(User.id == request_args["user_id"]).one()
+                user.nickname = user_info["nickName"]
+                user.avatar_url = user_info["avatarUrl"]
+                user.gender = user_info["gender"]
+
+                user.description = "注册完成"
+
+            self.response()
         except Exception as e:
-            result = dict()
-            result["status"] = 400
-            result["message"] = "参数错误!"
-            result["date"] = dict()
-            self.write(json.dumps(result))
+            self.response_error(e)
