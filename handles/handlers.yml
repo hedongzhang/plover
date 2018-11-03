@@ -11,5 +11,7 @@ handlers:
   handler: handles.login.LoginHandler
 - url: /api/user
   handler: handles.user.UserHandler
+- url: /api/users
+  handler: handles.user.UsersHandler
 - url: /api/copywriting
   handler: handles.copywriting.CopywritingHandler

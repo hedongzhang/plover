@@ -22,6 +22,7 @@ from model.schema import User, Balance, Order, Message
 class UserHandler(BasicHandler):
     def get(self):
         try:
+            session_id = self.get_argument("session_id")
             user_id = self.get_argument("user_id")
 
             with open_session() as session:
@@ -72,5 +73,43 @@ class UserHandler(BasicHandler):
                 user.description = "注册完成"
 
             self.response()
+        except Exception as e:
+            self.response_error(e)
+
+
+class UsersHandler(BasicHandler):
+    def get(self):
+        try:
+            session_id = self.get_argument("session_id")
+            state = self.get_argument("state")
+            status = self.get_argument("status")
+            limit = self.get_argument("limit")
+            offset = self.get_argument("offset")
+
+            data = dict()
+
+            with open_session() as session:
+                query = session.query(User)
+                if state:
+                    query = query.filter(User.state == state)
+                if status:
+                    query = query.filter(User.status == status)
+
+                data["count"] = query.count()
+                query = query.limit(limit)
+                query = query.offset(offset)
+
+                data["user_list"] = list()
+                for user in query.all():
+                    user_info = dict()
+                    user_info["id"] = user.id
+                    user_info["nick_name"] = user.nickname
+                    user_info["first_name"] = user.first_name
+                    user_info["last_name"] = user.last_name
+                    user_info["state"] = user.state
+                    user_info["phone"] = user.phone
+                    data["user_list"].append(user_info)
+
+            self.response(data)
         except Exception as e:
             self.response_error(e)
