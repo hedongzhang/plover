@@ -12,11 +12,10 @@ Description:
 
 import json
 
-from sqlalchemy import and_, or_
-
 from handles.base import BasicHandler
 from model.base import open_session
-from model.schema import User, Balance, Order, Message
+from model.schema import User, Balance, TransactionOrder, Message
+from utiles import config
 
 
 class BalanceHandler(BasicHandler):
@@ -32,13 +31,34 @@ class BalanceHandler(BasicHandler):
                 data = dict()
                 data["id"] = balance.id
                 data["user_id"] = user.id
-                data["amount"] = balance.amount
-                data["deposit"] = balance.deposit
+                data["amount"] = balance.amount.__str__()
+                data["deposit"] = balance.deposit.__str__()
                 data["state"] = balance.state
                 data["description"] = balance.description
                 data["update_time"] = balance.update_time.strftime("%Y-%m-%d %H:%M:%S")
-                # data["income"] =
-                # data["transaction_list"] =
+                data["income"] = 0
+                data["transaction_list"] = list()
+
+                query = session.query(TransactionOrder).filter(TransactionOrder.user_id == user_id)
+                query = query.order_by(TransactionOrder.create_time.desc()).limit(config.get("query_num"))
+                transactions = query.all()
+
+                for transaction in transactions:
+                    if transaction.type == TransactionOrder.TYPE_COLLECT:
+                        data["income"] += transaction.amount
+
+                    transaction_info = dict()
+                    transaction_info["id"] = transaction.id
+                    transaction_info["order_id"] = transaction.order_id
+                    transaction_info["wx_transaction_id"] = transaction.wx_transaction_id
+                    transaction_info["type"] = transaction.type
+                    transaction_info["amount"] = transaction.amount.__str__()
+                    transaction_info["commission"] = transaction.commission.__str__()
+                    transaction_info["description"] = transaction.description
+                    transaction_info["create_time"] = transaction.create_time.strftime("%Y-%m-%d %H:%M:%S")
+
+                    data["transaction_list"].append(transaction_info)
+                data["income"] = data["income"].__str__()
 
             self.response(data)
         except Exception as e:

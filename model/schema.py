@@ -193,7 +193,7 @@ class Takeaway(Entity):
     update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
 
 
-class Transaction_order(Entity):
+class TransactionOrder(Entity):
     """
         订单交易表
     """
@@ -205,7 +205,7 @@ class Transaction_order(Entity):
 
     user_id = Column(Integer, nullable=False, doc="用户id")
     order_id = Column(Integer, nullable=False, doc="订单id")
-    wx_transaction_id = Column(Integer, nullable=False, doc="订单id")
+    wx_transaction_id = Column(String(length=64), nullable=False, doc="订单id")
     type = Column(Integer, nullable=False, doc="0-雇主下单，1-佣兵收款，2-雇主取消订单")
     amount = Column(DECIMAL(10,2), nullable=False, doc="交易金额")
     commission = Column(DECIMAL(10,2), nullable=False, doc="平台佣金")
@@ -215,7 +215,7 @@ class Transaction_order(Entity):
     update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
 
 
-class Transaction_non_order(Entity):
+class TransactionNonOrder(Entity):
     """
         非订单交易表
     """
