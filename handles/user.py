@@ -52,7 +52,7 @@ class UserHandler(BasicHandler):
                 data["state"] = user.state
                 data["undone_order_count"] = undone_order_count
                 data["unread_message_count"] = unread_message_count
-                data["amount"] = balance.amount
+                data["amount"] = balance.amount.__str__()
 
             self.response(data)
         except Exception as e:
@@ -66,7 +66,7 @@ class UserHandler(BasicHandler):
 
             with open_session() as session:
                 user = session.query(User).filter(User.id == request_args["user_id"]).one()
-                user.nick_name = user_info["nick_name"]
+                user.nick_name = user_info["nickName"]
                 user.avatar_url = user_info["avatarUrl"]
                 user.gender = user_info["gender"]
 

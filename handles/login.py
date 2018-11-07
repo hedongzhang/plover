@@ -26,12 +26,13 @@ class LoginHandler(BasicHandler):
             request_context = self.post_request_args(necessary_list)
             request_context["grant_type"] = "authorization_code"
 
-            # code2session_response = yield executor.submit(httpclient.get, url=config.get("code2session_url"),
-            #                                               args=request_context)
-
-            code2session_response = dict(errcode=0, openid=random_tool.random_int(1024 * 1024 * 1024),
-                                         session_key=random_tool.random_string(),
-                                         unionid=random_tool.random_int(1024 * 1024 * 1024))
+            if config.get("debug"):
+                code2session_response = dict(errcode=0, openid=random_tool.random_int(1024 * 1024 * 1024),
+                                             session_key=random_tool.random_string(),
+                                             unionid=random_tool.random_int(1024 * 1024 * 1024))
+            else:
+                code2session_response = yield executor.submit(httpclient.get, url=config.get("code2session_url"),
+                                                              args=request_context)
 
             if code2session_response["errcode"] == 0:
                 self.user_login(code2session_response)
