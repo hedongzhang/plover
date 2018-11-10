@@ -13,6 +13,7 @@ Description:
 from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Address
+from utiles.exception import PlException
 
 
 class AddressHandler(BasicHandler):
@@ -113,14 +114,17 @@ class AddressDefaultHandler(BasicHandler):
             user_id = self.get_argument("user_id")
 
             with open_session() as session:
-                address = session.query(Address).filter(Address.user_id == user_id, Address.default == True).one()
-
-                data = dict()
-                data["id"] = address.id
-                data["first_address"] = address.first_address
-                data["last_address"] = address.last_address
-                data["nick_name"] = address.nick_name
-                data["phone"] = address.phone
+                address = session.query(Address).filter(Address.user_id == user_id,
+                                                        Address.default == True).one_or_none()
+                if address:
+                    data = dict()
+                    data["id"] = address.id
+                    data["first_address"] = address.first_address
+                    data["last_address"] = address.last_address
+                    data["nick_name"] = address.nick_name
+                    data["phone"] = address.phone
+                else:
+                    raise PlException("This user have no default address !")
 
             self.response(data)
         except Exception as e:

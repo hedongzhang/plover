@@ -34,6 +34,26 @@ class MessageHandler(BasicHandler):
         except Exception as e:
             self.response_error(e)
 
+    def post(self):
+        try:
+
+            necessary_list = ["user_id", "title", "context", "type", "state"]
+            request_args = self.post_request_args(necessary_list=necessary_list)
+
+            with open_session() as session:
+                message = Message(
+                    user_id=request_args["user_id"],
+                    title=request_args["title"],
+                    context=request_args["context"],
+                    type=request_args["type"],
+                    state=request_args["state"]
+                )
+                session.add(message)
+
+            self.response()
+        except Exception as e:
+            self.response_error(e)
+
 
 class MessagesHandler(BasicHandler):
     def get(self):
