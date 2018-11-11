@@ -99,7 +99,7 @@ class Address(Entity):
     __tablename__ = "address"
 
     TYPE_TACK = 0
-    TYPE_SEND = 1
+    TYPE_RECIVE = 1
 
     PROPERTY_FEMALE = 0
     PROPERTY_MALE = 1
@@ -136,6 +136,20 @@ class Balance(Entity):
     amount = Column(DECIMAL(10,2), nullable=False, doc="账户余额")
     deposit = Column(DECIMAL(10,2), nullable=False, doc="押金")
     state = Column(Integer, nullable=False, doc="状态: 0-冻结, 1-正常")
+
+    description = Column(String(length=256), doc="备注")
+    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+
+
+class Verification(Entity):
+    """
+        ﻿验证数据表
+    """
+    __tablename__ = "verification"
+
+    phone = Column(String(length=16), nullable=False, unique=True, doc="手机号")
+    verification_code = Column(String(length=64), nullable=False, doc="验证码")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")

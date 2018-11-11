@@ -25,6 +25,7 @@ handlers:
   handler: handles.message.MessagesHandler
 - url: /api/user/balance
   handler: handles.balance.BalanceHandler
-
+- url: /api/verification
+  handler: handles.verification.VerificationHandler
 - url: /api/copywriting
   handler: handles.copywriting.CopywritingHandler
