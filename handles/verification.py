@@ -14,6 +14,7 @@ from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Verification
 from utiles import random_tool
+from utiles.exception import ParameterInvalidException
 
 
 class VerificationHandler(BasicHandler):
@@ -40,5 +41,7 @@ class VerificationHandler(BasicHandler):
                 data["verification_code"] = verification.verification_code
 
                 self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)

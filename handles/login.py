@@ -14,6 +14,7 @@ from tornado import gen
 
 from handles.base import executor, BasicHandler
 from utiles import config, httpclient, random_tool
+from utiles.exception import ParameterInvalidException
 from model.base import open_session
 from model.schema import User, Balance, Session
 
@@ -37,10 +38,12 @@ class LoginHandler(BasicHandler):
             if code2session_response["errcode"] == 0:
                 self.user_login(code2session_response)
             else:
-                self.response_error("微信API服务访问失败({errcode}:{errmsg})".format(**code2session_response))
+                self.response_server_error("微信API服务访问失败({errcode}:{errmsg})".format(**code2session_response))
 
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
     def user_login(self, code2session_response):
         data = dict()

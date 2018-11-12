@@ -20,19 +20,6 @@ from aliyunsdkcore.http import method_type as MT
 from aliyunsdkcore.http import format_type as FT
 import const
 
-"""
-短信业务调用接口示例，版本号：v20170525
-
-Created on 2017-06-12
-
-"""
-try:
-    reload(sys)
-    sys.setdefaultencoding('utf8')
-except NameError:
-    pass
-except Exception as err:
-    raise err
 
 # 注意：不要更改
 REGION = "cn-hangzhou"
@@ -43,7 +30,7 @@ acs_client = AcsClient(const.ACCESS_KEY_ID, const.ACCESS_KEY_SECRET, REGION)
 region_provider.add_endpoint(PRODUCT_NAME, REGION, DOMAIN)
 
 
-def send_sms(business_id, phone_numbers, sign_name, template_code, template_param=None):
+def send_sms(session_id, phone_numbers, sign_name, template_code, template_param=None):
     smsRequest = SendSmsRequest.SendSmsRequest()
     # 申请的短信模板编码,必填
     smsRequest.set_TemplateCode(template_code)
@@ -53,7 +40,7 @@ def send_sms(business_id, phone_numbers, sign_name, template_code, template_para
         smsRequest.set_TemplateParam(template_param)
 
     # 设置业务请求流水号，必填。
-    smsRequest.set_OutId(business_id)
+    smsRequest.set_OutId(session_id)
 
     # 短信签名
     smsRequest.set_SignName(sign_name)
@@ -76,8 +63,8 @@ def send_sms(business_id, phone_numbers, sign_name, template_code, template_para
 
 
 if __name__ == '__main__':
-    __business_id = uuid.uuid1()
-    # print(__business_id)
+    __session_id = uuid.uuid1()
+    # print(__session_id)
     params = "{\"code\":\"12345\",\"product\":\"云通信\"}"
     # params = u'{"name":"wqb","code":"12345678","address":"bz","phone":"13000000000"}'
-    print(send_sms(__business_id, "13000000000", "云通信测试", "SMS_5250008", params))
+    print(send_sms(__session_id, "13000000000", "云通信测试", "SMS_5250008", params))

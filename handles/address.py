@@ -13,6 +13,7 @@ Description:
 from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Address
+from utiles.exception import ParameterInvalidException
 
 
 properties = ["user_id", "type", "property", "nick_name", "first_name", "last_name", "phone",
@@ -44,8 +45,10 @@ class AddressHandler(BasicHandler):
                 data["default"] = address.default
 
             self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
     def post(self):
         try:
@@ -75,8 +78,10 @@ class AddressHandler(BasicHandler):
                 session.add(address)
 
             self.response()
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
     def put(self):
         try:
@@ -100,8 +105,10 @@ class AddressHandler(BasicHandler):
                         address.__setattr__(property, request_args[property])
 
             self.response()
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
     def delete(self, *args, **kwargs):
         try:
@@ -114,8 +121,10 @@ class AddressHandler(BasicHandler):
                     session.delete(address)
 
             self.response()
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
 
 class AddressDefaultHandler(BasicHandler):
@@ -146,8 +155,10 @@ class AddressDefaultHandler(BasicHandler):
                         data["recive_address"][property] = default_recive_address.__getattribute__(property)
 
             self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
 
 class AddressesHandler(BasicHandler):
@@ -199,5 +210,7 @@ class AddressesHandler(BasicHandler):
                     data["address_list"].append(address_info)
 
             self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)

@@ -16,6 +16,7 @@ from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import User, Balance, TransactionOrder, Message
 from utiles import config
+from utiles.exception import ParameterInvalidException
 
 
 class BalanceHandler(BasicHandler):
@@ -61,8 +62,10 @@ class BalanceHandler(BasicHandler):
                 data["income"] = data["income"].__str__()
 
             self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
     def post(self):
         try:
@@ -79,5 +82,7 @@ class BalanceHandler(BasicHandler):
                 user.description = "注册完成"
 
             self.response()
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)

@@ -15,6 +15,7 @@ import json
 import tornado.web
 
 from utiles import config
+from utiles.exception import ParameterInvalidException
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -23,11 +24,11 @@ executor = ThreadPoolExecutor(max_workers=32)
 RESPONSE_STATUS_SUCESS = 200
 RESPONSE_MESSAGE_SUCESS = "请求成功"
 
-RESPONSE_STATUS_BAD_REQUEST = 400
-RESPONSE_MESSAGE_BAD_REQUEST = "错误请求：缺少请求参数，或者请求参数无效"
+RESPONSE_STATUS_REQUEST_ERROR = 400
+RESPONSE_MESSAGE_REQUEST_ERRER = "Request Error: {error_message}"
 
 RESPONSE_STATUS_SERVER_ERROR = 500
-RESPONSE_MESSAGE_SERVER_ERROR = "后端服务错误: {error_message}"
+RESPONSE_MESSAGE_SERVER_ERROR = "Server Error: {error_message}"
 
 
 class BasicHandler(tornado.web.RequestHandler):
@@ -42,23 +43,31 @@ class BasicHandler(tornado.web.RequestHandler):
         return_request = dict(status=status, message=message, data=data)
         self.write(json.dumps(return_request))
 
-    def response_error(self, message):
+    def response_request_error(self, message):
+        status = RESPONSE_STATUS_REQUEST_ERROR
+        message = RESPONSE_MESSAGE_REQUEST_ERRER.format(error_message=message)
+        self.response(status, message)
+
+    def response_server_error(self, message):
         status = RESPONSE_STATUS_SERVER_ERROR
         message = RESPONSE_MESSAGE_SERVER_ERROR.format(error_message=message)
         self.response(status, message)
 
     def post_request_args(self, necessary_list=None):
-        request_context = json.loads(self.request.body)
+        try:
+            request_context = json.loads(self.request.body)
+        except Exception as e:
+            raise ParameterInvalidException("JSON解析失败")
+
         self.session_id = request_context.get("session_id")
         self.request_args = request_context.get("post_vars")
 
         if necessary_list:
             for args in necessary_list:
                 if args not in self.request_args:
-                    raise Exception("请求缺少必要的参数")
+                    raise ParameterInvalidException("请求缺少必要的参数")
 
         return self.request_args
-
 
     def data_received(self, chunk):
         pass

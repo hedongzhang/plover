@@ -19,6 +19,10 @@ class PlException(Exception):
         return self.message
 
 
+class ParameterInvalidException(PlException):
+    def __str__(self):
+        return "参数错误：" + self.message
+
 if __name__ == "__main__":
     try:
         raise PlException("hello error")

@@ -13,6 +13,7 @@ Description:
 from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Message
+from utiles.exception import ParameterInvalidException
 
 
 class MessageHandler(BasicHandler):
@@ -31,8 +32,10 @@ class MessageHandler(BasicHandler):
                 data["create_time"] = message.create_time.strftime("%Y-%m-%d %H:%M:%S")
 
             self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
     def post(self):
         try:
@@ -51,8 +54,10 @@ class MessageHandler(BasicHandler):
                 session.add(message)
 
             self.response()
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
 
 class MessagesHandler(BasicHandler):
@@ -88,5 +93,7 @@ class MessagesHandler(BasicHandler):
                     data["message_list"].append(message_info)
 
             self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)

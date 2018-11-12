@@ -17,6 +17,7 @@ from sqlalchemy import and_, or_
 from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import User, Balance, Order, Message
+from utiles.exception import ParameterInvalidException
 
 
 class UserHandler(BasicHandler):
@@ -55,8 +56,10 @@ class UserHandler(BasicHandler):
                 data["amount"] = balance.amount.__str__()
 
             self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
     def post(self):
         try:
@@ -73,8 +76,10 @@ class UserHandler(BasicHandler):
                 user.description = "注册完成"
 
             self.response()
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
 
 
 class UsersHandler(BasicHandler):
@@ -111,5 +116,7 @@ class UsersHandler(BasicHandler):
                     data["user_list"].append(user_info)
 
             self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
         except Exception as e:
-            self.response_error(e)
+            self.response_server_error(e)
