@@ -10,11 +10,12 @@ Description:
 
 """
 
+import os
 import yaml
 
 
 class Config(object):
-    def __init__(self, file="/root/plover/conf/config.yml"):
+    def __init__(self, file=os.path.join(os.path.dirname(__file__), "config.yml")):
         self._file = file
         self._config = self.read()
 

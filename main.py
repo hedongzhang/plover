@@ -16,7 +16,7 @@ import tornado.options
 import tornado.web
 
 import application
-from utiles import config
+from conf import config
 
 
 def main():

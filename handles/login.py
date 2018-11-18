@@ -12,11 +12,12 @@ Description:
 
 from tornado import gen
 
+from conf import config
 from handles.base import executor, BasicHandler
-from utiles import config, httpclient, random_tool
-from utiles.exception import ParameterInvalidException
 from model.base import open_session
 from model.schema import User, Balance, Session
+from utiles import httpclient, random_tool
+from utiles.exception import ParameterInvalidException
 
 
 class LoginHandler(BasicHandler):

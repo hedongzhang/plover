@@ -29,5 +29,5 @@ handlers:
   handler: handles.verification.VerificationHandler
 - url: /api/upload
   handler: handles.upload.UploadHandler
-- url: /api/copywriting
-  handler: handles.copywriting.CopywritingHandler
+- url: /api/config
+  handler: handles.config.ConfigHandler

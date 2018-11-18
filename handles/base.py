@@ -11,13 +11,12 @@ Description:
 """
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 
 import tornado.web
 
-from utiles import config
+from conf import config
 from utiles.exception import ParameterInvalidException
-
-from concurrent.futures import ThreadPoolExecutor
 
 executor = ThreadPoolExecutor(max_workers=32)
 

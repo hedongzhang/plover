@@ -11,8 +11,9 @@ Description:
 """
 
 import os
+
+from conf import config
 from handles.base import BasicHandler
-from utiles import config
 from utiles.exception import PlException, ParameterInvalidException
 
 

@@ -10,18 +10,18 @@ Description:
 
 """
 
-from datetime import datetime
 from contextlib import contextmanager
+from datetime import datetime
 
-from sqlalchemy import Column, inspect, Integer, DateTime
+from sqlalchemy import Column, inspect, Integer
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.schema import MetaData
 from sqlalchemy.pool import NullPool
+from sqlalchemy.schema import MetaData
 
-from utiles import config
+from conf import config
 
 engine = create_engine(config.get("engine_str"), poolclass=NullPool,
                        connect_args={"use_unicode": True, "charset": "utf8"}, echo=True)

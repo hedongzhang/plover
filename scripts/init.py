@@ -15,3 +15,4 @@ from model import schema
 
 if __name__ == "__main__":
     base.clean_all_table()
+

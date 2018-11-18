@@ -12,9 +12,10 @@ Description:
 
 import json
 
+from conf import config
 from handles.base import RESPONSE_STATUS_SUCESS
-from utiles import httpclient, config, random_tool
-from model import base, schema
+from model import base
+from utiles import httpclient, random_tool
 
 BASE_URL = "https://{hostname}:{port}/api/".format(hostname=config.get("https_domain_name"),
                                                    port=config.get("https_listen_port"))
@@ -91,6 +92,26 @@ def add_user_address():
 
 def add_user_message():
     url = BASE_URL + "user/message"
+
+    for i in range(USER_NUM):
+        for j in range(random_tool.random_int(15)):
+            post_vars = dict(
+                user_id=i + 1,
+                type=0,
+                state=random_tool.random_int(1),
+                title=random_tool.random_chinese(8),
+                context=random_tool.random_chinese(25)
+            )
+
+            args = dict(session_id=SESSION_ID, post_vars=post_vars)
+            print("add user:{user_id} message".format(**post_vars))
+            ret = httpclient.post(url, args)
+            if ret["status"] != RESPONSE_STATUS_SUCESS:
+                raise Exception("Mock user message failed!")
+
+
+def add_system_config():
+    url = BASE_URL + "config"
 
     for i in range(USER_NUM):
         for j in range(random_tool.random_int(15)):

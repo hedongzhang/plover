@@ -12,10 +12,10 @@ Description:
 
 import json
 
+from conf import config
 from handles.base import BasicHandler
 from model.base import open_session
-from model.schema import User, Balance, TransactionOrder, Message
-from utiles import config
+from model.schema import User, Balance, TransactionOrder
 from utiles.exception import ParameterInvalidException
 
 

@@ -258,7 +258,7 @@ class Config(Entity):
     """
     __tablename__ = "config"
 
-    TYPE = 0
+    TYPE_NORMAL = 0
 
     key = Column(String(length=32), doc="配置名称")
     value = Column(String(length=32), doc="配置值")
