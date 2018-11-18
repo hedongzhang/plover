@@ -16,8 +16,8 @@ from sqlalchemy import and_, or_
 
 from handles.base import BasicHandler
 from model.base import open_session
-from model.schema import User, Balance, Order, Message
-from utiles.exception import ParameterInvalidException
+from model.schema import User, Balance, Order, Message, Verification
+from utiles.exception import ParameterInvalidException, PlException
 
 
 class UserHandler(BasicHandler):
@@ -74,6 +74,30 @@ class UserHandler(BasicHandler):
                 user.gender = user_info["gender"]
 
                 user.description = "注册完成"
+
+            self.response()
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
+        except Exception as e:
+            self.response_server_error(e)
+
+    def put(self):
+        try:
+            necessary_list = ["user_id", "school", "first_name", "last_name", "phone", "verification_code", "gender",
+                              "id_number", "id_photo_path"]
+            request_args = self.post_request_args(necessary_list=necessary_list)
+
+            with open_session() as session:
+                verification = session.query(Verification).filter(
+                    Verification.phone == request_args["phone"]).one_or_none()
+                if not verification or verification.verification_code != request_args["verification_code"]:
+                    raise PlException("验证码校验失败，请检查手机验证码")
+
+                user = session.query(User).filter(User.id == request_args["user_id"]).one()
+                for attr in necessary_list[1:]:
+                    user.__setattr__(attr, request_args[attr])
+
+                user.description = "已完善资料，等待缴纳押金"
 
             self.response()
         except ParameterInvalidException as e:
