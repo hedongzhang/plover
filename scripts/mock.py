@@ -14,12 +14,12 @@ import json
 
 from conf import config
 from handles.base import RESPONSE_STATUS_SUCESS
-from model import base
+from model import base, schema
 from utiles import httpclient, random_tool
 
 BASE_URL = "https://{hostname}:{port}/api/".format(hostname=config.get("https_domain_name"),
                                                    port=config.get("https_listen_port"))
-USER_NUM = 50
+USER_NUM = 30
 SESSION_ID = "XBItG2mcVkbClXFzYMkSELkRgYEnOMRo"
 
 
@@ -113,21 +113,22 @@ def add_user_message():
 def add_system_config():
     url = BASE_URL + "config"
 
-    for i in range(USER_NUM):
-        for j in range(random_tool.random_int(15)):
-            post_vars = dict(
-                user_id=i + 1,
-                type=0,
-                state=random_tool.random_int(1),
-                title=random_tool.random_chinese(8),
-                context=random_tool.random_chinese(25)
-            )
-
-            args = dict(session_id=SESSION_ID, post_vars=post_vars)
-            print("add user:{user_id} message".format(**post_vars))
-            ret = httpclient.post(url, args)
-            if ret["status"] != RESPONSE_STATUS_SUCESS:
-                raise Exception("Mock user message failed!")
+    post_vars = dict(
+        amount_per_order=2,
+        draw_cratio=0.2,
+        deposit=20,
+        # 文案
+        master_title="这次，不需要自己拿",
+        master_desc="即使再忙，也别太累",
+        master_banner="同学帮送，快速送达",
+        slave_title="这次，赚点零花钱",
+        slave_desc="空闲之余，也有所得"
+    )
+    args = dict(session_id=SESSION_ID, post_vars=post_vars)
+    print("init plover config:{post_vars}".format(post_vars=post_vars))
+    ret = httpclient.post(url, args)
+    if ret["status"] != RESPONSE_STATUS_SUCESS:
+        raise Exception("Mock plover config failed!")
 
 
 if __name__ == "__main__":
@@ -136,3 +137,4 @@ if __name__ == "__main__":
     register_user()
     add_user_address()
     add_user_message()
+    add_system_config()

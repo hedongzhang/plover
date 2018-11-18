@@ -21,7 +21,7 @@ class ConfigHandler(BasicHandler):
         with open_session() as session:
             configs = session.query(Config).all()
             for config in configs:
-                data[config.key] = data[config.value]
+                data[config.key] = config.value
 
         self.response(data=data)
 
