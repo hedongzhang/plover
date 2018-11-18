@@ -10,11 +10,13 @@ Description:
 
 """
 
+from datetime import datetime, timedelta
+
 from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Verification
-from utiles import random_tool
-from utiles.exception import ParameterInvalidException
+from utiles import random_tool, sms
+from utiles.exception import ParameterInvalidException, PlException
 
 
 class VerificationHandler(BasicHandler):
@@ -28,12 +30,17 @@ class VerificationHandler(BasicHandler):
 
                 verification = session.query(Verification).filter(Verification.phone == phone).one_or_none()
                 if verification:
-                    verification.verification_code = verification_code
+                    if datetime.now() < verification.update_time + timedelta(minutes=1):
+                        raise PlException("上次获取验证码不足一分钟, 请稍后重试")
+                    else:
+                        verification.verification_code = verification_code
+                        verification.count += 1
                 else:
-                    verification = Verification(phone=phone, verification_code=verification_code)
+                    verification = Verification(phone=phone, verification_code=verification_code, count=1)
                     session.add(verification)
 
-                # TODO: 调用短信接口，发送短信
+                # 调用短信接口，发送短信
+                sms.send_verification_code(session_id, phone, verification_code)
 
                 data = dict()
                 data["id"] = verification.id

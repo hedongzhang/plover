@@ -22,7 +22,7 @@ from utiles import config
 def main():
     app = application.Application()
     ssl_options = dict(certfile=config.get("certfile"), keyfile=config.get("keyfile"))
-    http_server = tornado.httpserver.HTTPServer(app, ssl_options=ssl_options)
+    http_server = tornado.httpserver.HTTPServer(app, ssl_options=ssl_options, max_body_size=config.get("max_body_size"))
     http_server.listen(config.get("https_listen_port"))
     tornado.ioloop.IOLoop.instance().start()
 

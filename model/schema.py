@@ -150,6 +150,7 @@ class Verification(Entity):
 
     phone = Column(String(length=16), nullable=False, unique=True, doc="手机号")
     verification_code = Column(String(length=64), nullable=False, doc="验证码")
+    count = Column(Integer, nullable=False, doc="获取次数")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")

@@ -27,5 +27,7 @@ handlers:
   handler: handles.balance.BalanceHandler
 - url: /api/verification
   handler: handles.verification.VerificationHandler
+- url: /api/upload
+  handler: handles.upload.UploadHandler
 - url: /api/copywriting
   handler: handles.copywriting.CopywritingHandler
