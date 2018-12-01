@@ -133,8 +133,8 @@ class Balance(Entity):
     STATE_NORMAL = 1
 
     user_id = Column(Integer, nullable=False, unique=True, doc="用户id")
-    amount = Column(DECIMAL(10,2), nullable=False, doc="账户余额")
-    deposit = Column(DECIMAL(10,2), nullable=False, doc="押金")
+    amount = Column(DECIMAL(10, 2), nullable=False, doc="账户余额")
+    deposit = Column(DECIMAL(10, 2), nullable=False, doc="押金")
     state = Column(Integer, nullable=False, doc="状态: 0-冻结, 1-正常")
 
     description = Column(String(length=256), doc="备注")
@@ -174,8 +174,8 @@ class Order(Entity):
     master_id = Column(Integer, nullable=False, doc="雇主id")
     slave_id = Column(Integer, nullable=False, doc="佣兵id")
     takeaway_id = Column(Integer, nullable=False, doc="外卖id")
-    amount = Column(DECIMAL(10,2), nullable=False, doc="订单金额")
-    tip = Column(DECIMAL(10,2), nullable=False, doc="小费")
+    amount = Column(DECIMAL(10, 2), nullable=False, doc="订单金额")
+    tip = Column(DECIMAL(10, 2), nullable=False, doc="小费")
     verification_code = Column(String(length=64), nullable=False, doc="验证码")
     state = Column(Integer, nullable=False, doc="状态: 0-未支付，1-未接单，2-已接单，3-配送中，4-已送达, 5-完成, 6-已取消")
     order_time = Column(DateTime, default=datetime.now, doc="接单时间utc")
@@ -222,8 +222,8 @@ class TransactionOrder(Entity):
     order_id = Column(Integer, nullable=False, doc="订单id")
     wx_transaction_id = Column(String(length=64), nullable=False, doc="订单id")
     type = Column(Integer, nullable=False, doc="0-雇主下单，1-佣兵收款，2-雇主取消订单")
-    amount = Column(DECIMAL(10,2), nullable=False, doc="交易金额")
-    commission = Column(DECIMAL(10,2), nullable=False, doc="平台佣金")
+    amount = Column(DECIMAL(10, 2), nullable=False, doc="交易金额")
+    commission = Column(DECIMAL(10, 2), nullable=False, doc="平台佣金")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
@@ -242,10 +242,19 @@ class TransactionNonOrder(Entity):
     TYPE_SAVE_CASH = 3
     TYPE_WITHDRAW_CASH = 4
 
+    WX_TRANSACTION_ID = 0
+
+    STATE_UNFINISH = 0
+    STATE_FINISH = 1
+    STATE_FAILED = 2
+    STATE_ABNORMAL = 3
+
     user_id = Column(Integer, nullable=False, doc="用户id")
-    wx_transaction_id = Column(Integer, nullable=False, doc="订单id")
+    transaction_id = Column(String(length=128), nullable=False, doc="交易id")
+    wx_transaction_id = Column(String(length=128), nullable=False, doc="微信交易id, 0-未实际发生微信交易")
     type = Column(Integer, nullable=False, doc="0-管理员操作, 1-缴纳押金，2-退还押金，3-存入账户，4-从账户提现")
-    amount = Column(DECIMAL(10,2), nullable=False, doc="交易金额")
+    state = Column(Integer, nullable=False, doc="交易状态，0-未完成，1-已完成, 2-交易失败, 3-交易异常")
+    amount = Column(DECIMAL(10, 2), nullable=False, doc="交易金额")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")

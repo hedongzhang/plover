@@ -70,7 +70,7 @@ class BalanceHandler(BasicHandler):
     def post(self):
         try:
             necessary_list = ["user_id", "user_info", "raw_data", "signature", "encrypted_data", "iv"]
-            request_args = self.post_request_args(necessary_list=necessary_list)
+            request_args = self.request_args(necessary_list=necessary_list)
             user_info = json.loads(request_args["user_info"])
 
             with open_session() as session:

@@ -41,7 +41,7 @@ class MessageHandler(BasicHandler):
         try:
 
             necessary_list = ["user_id", "title", "context", "type", "state"]
-            request_args = self.post_request_args(necessary_list=necessary_list)
+            request_args = self.request_args(necessary_list=necessary_list)
 
             with open_session() as session:
                 message = Message(

@@ -52,7 +52,7 @@ class AddressHandler(BasicHandler):
 
     def post(self):
         try:
-            request_args = self.post_request_args(necessary_list=properties)
+            request_args = self.request_args(necessary_list=properties)
 
             with open_session() as session:
                 default_address = session.query(Address).filter(Address.user_id == request_args["user_id"],
@@ -86,7 +86,7 @@ class AddressHandler(BasicHandler):
     def put(self):
         try:
             necessary_list = ["id"]
-            request_args = self.post_request_args(necessary_list=necessary_list)
+            request_args = self.request_args(necessary_list=necessary_list)
 
             with open_session() as session:
                 address = session.query(Address).filter(Address.id == request_args["id"]).one_or_none()
@@ -113,7 +113,7 @@ class AddressHandler(BasicHandler):
     def delete(self, *args, **kwargs):
         try:
             necessary_list = ["id"]
-            request_args = self.post_request_args(necessary_list=necessary_list)
+            request_args = self.request_args(necessary_list=necessary_list)
 
             with open_session() as session:
                 address = session.query(Address).filter(Address.id == request_args["id"]).one_or_none()

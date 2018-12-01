@@ -27,7 +27,7 @@ class ConfigHandler(BasicHandler):
 
     def post(self):
         try:
-            request_args = self.post_request_args()
+            request_args = self.request_args()
 
             with open_session() as session:
                 for key, value in request_args.items():

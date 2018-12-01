@@ -25,7 +25,7 @@ class LoginHandler(BasicHandler):
     def post(self):
         try:
             necessary_list = ["appid", "secret", "js_code"]
-            request_context = self.post_request_args(necessary_list)
+            request_context = self.request_args(necessary_list)
             request_context["grant_type"] = "authorization_code"
 
             if config.get("debug"):

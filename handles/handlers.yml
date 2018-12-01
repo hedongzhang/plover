@@ -25,9 +25,15 @@ handlers:
   handler: handles.message.MessagesHandler
 - url: /api/user/balance
   handler: handles.balance.BalanceHandler
+- url: /api/user/deposit
+  handler: handles.deposit.DepositHandler
 - url: /api/verification
   handler: handles.verification.VerificationHandler
 - url: /api/upload
   handler: handles.upload.UploadHandler
 - url: /api/config
   handler: handles.config.ConfigHandler
+
+# 回调API
+- url: /api/user/deposit/(\d+)$
+  handler: handles.deposit.DepositCallbackHandler
