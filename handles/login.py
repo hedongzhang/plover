@@ -18,6 +18,7 @@ from model.base import open_session
 from model.schema import User, Account, Session
 from utiles import httpclient, random_tool
 from utiles.exception import ParameterInvalidException
+from handles.wx_api import code2session
 
 
 class LoginHandler(BasicHandler):
@@ -33,8 +34,7 @@ class LoginHandler(BasicHandler):
                                              session_key=random_tool.random_string(),
                                              unionid=random_tool.random_int(1024 * 1024 * 1024))
             else:
-                code2session_response = yield executor.submit(httpclient.get, url=config.get("code2session_url"),
-                                                              args=request_context)
+                code2session_response = yield executor.submit(code2session, args=request_context)
 
             if code2session_response["errcode"] == 0:
                 self.user_login(code2session_response)
@@ -81,7 +81,7 @@ class LoginHandler(BasicHandler):
             data["user_id"] = user.id
             data["session_id"] = session_id
 
-        self.response(data=data)
+        self.response(data)
 
     def data_received(self, chunk):
         pass

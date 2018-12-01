@@ -51,7 +51,7 @@ class UploadHandler(BasicHandler):
 
                 data["path"] += "," + file_path if data["path"] else file_path
 
-            self.response(data=data)
+            self.response(data)
         except ParameterInvalidException as e:
             self.response_request_error(e)
         except Exception as e:

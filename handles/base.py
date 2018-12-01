@@ -54,12 +54,12 @@ class BasicHandler(tornado.web.RequestHandler):
     def response_request_error(self, message):
         status = RESPONSE_STATUS_REQUEST_ERROR
         message = RESPONSE_MESSAGE_REQUEST_ERRER.format(error_message=message)
-        self.response(status, message)
+        self.response(status=status, message=message)
 
     def response_server_error(self, message):
         status = RESPONSE_STATUS_SERVER_ERROR
         message = RESPONSE_MESSAGE_SERVER_ERROR.format(error_message=message)
-        self.response(status, message)
+        self.response(status=status, message=message)
 
     def request_args(self, necessary_list=None):
         try:
