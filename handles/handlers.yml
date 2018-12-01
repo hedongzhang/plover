@@ -27,6 +27,8 @@ handlers:
   handler: handles.account.AccountHandler
 - url: /api/user/account/actions/deposit
   handler: handles.account.DepositHandler
+- url: /api/user/account/actions/redemption
+  handler: handles.account.RedemptionHandler
 - url: /api/user/account/actions/withdraw
   handler: handles.account.WithdrawHandler
 - url: /api/verification

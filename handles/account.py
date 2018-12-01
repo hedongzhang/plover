@@ -212,67 +212,73 @@ class DepositCallbackHandler(CallbackHandler):
             self.response_error(e)
 
 
+class RedemptionHandler(BasicHandler):
+    def post(self):
+        try:
+            necessary_list = ["user_id"]
+            request_args = self.request_args(necessary_list=necessary_list)
+
+            user_id = request_args["user_id"]
+            transaction_id = random_tool.random_string()
+
+            with open_session() as session:
+                account = session.query(Account).filter(Account.user_id == user_id).one()
+
+                transaction = TransactionNonOrder(
+                    user_id=request_args["user_id"],
+                    transaction_id=transaction_id,
+                    wx_transaction_id=TransactionNonOrder.WX_TRANSACTION_ID,
+                    type=TransactionNonOrder.TYPE_RETURN_DEPOSIT,
+                    state=TransactionNonOrder.STATE_UNFINISH,
+                    amount=account.deposit,
+                    description="等待退还押金"
+                )
+                session.add(transaction)
+                session.flush()
+
+            self.response()
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
+        except Exception as e:
+            self.response_server_error(e)
+
+
 class WithdrawHandler(BasicHandler):
-    @gen.coroutine
     def post(self):
         try:
             necessary_list = ["user_id", "amount"]
             request_args = self.request_args(necessary_list=necessary_list)
 
+            user_id = request_args["user_id"]
+            amount = request_args["amount"]
             transaction_id = random_tool.random_string()
 
             with open_session() as session:
+                account = session.query(Account).filter(Account.user_id == user_id).one()
+                unfinish_orders = session.query(TransactionNonOrder).filter(
+                    TransactionNonOrder.user_id == user_id,
+                    TransactionNonOrder.state == TransactionNonOrder.STATE_UNFINISH,
+                    TransactionNonOrder.type == TransactionNonOrder.TYPE_WITHDRAW_CASH).all()
+
+                if unfinish_orders:
+                    raise PlException("存在未完成的提现请求，请完成后再继续申请提现")
+
+                if account.amount < amount:
+                    raise PlException("余额不足，请确认金额是否正确")
+
                 transaction = TransactionNonOrder(
                     user_id=request_args["user_id"],
                     transaction_id=transaction_id,
                     wx_transaction_id=TransactionNonOrder.WX_TRANSACTION_ID,
-                    type=TransactionNonOrder.TYPE_PAY_DEPOSIT,
+                    type=TransactionNonOrder.TYPE_WITHDRAW_CASH,
                     state=TransactionNonOrder.STATE_UNFINISH,
-                    amount=request_args["amount"],
-                    description="等待微信支付押金"
+                    amount=amount,
+                    description="等待提现到账"
                 )
                 session.add(transaction)
                 session.flush()
 
-            if config.get("debug"):
-                prepay_id = "wx201411101639507cbf6ffd8b0779950874"
-            else:
-                # 调用统一下单API
-                unifiedorder_args = dict(
-                    appid=config.get("appid"),
-                    mch_id=config.get("mch_id"),
-                    nonce_str=transaction_id,
-                    body="deposit",
-                    out_trade_no=transaction_id,
-                    total_fee=request_args["amount"],
-                    spbill_create_ip=self.request.remote_ip,
-                    notify_url="https://{hostname}:{port}/api/user/deposit/{transaction_id}".format(
-                        hostname=config.get("https_domain_name"),
-                        port=config.get("https_listen_port"),
-                        transaction_id=transaction.id),
-                    trade_type="JSAPI"
-                )
-                unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
-                if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
-                    raise PlException("调用微信统一下单接口失败:%s" % unifiedorder_ret["return_msg"])
-
-                if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
-                    raise PlException("调用微信统一下单接口出错 err_code:%s err_code_des:%s " % (
-                        unifiedorder_ret["err_code"], unifiedorder_ret["err_code_des"]))
-
-                prepay_id = unifiedorder_ret["prepay_id"]
-
-            # 生成签名
-            data = dict()
-            data["appid"] = config.get("appid")
-            data["timeStamp"] = str(int(time.time()))
-            data["nonceStr"] = transaction_id
-            data["package"] = "prepay_id=%s" % prepay_id
-            data["signType"] = "MD5"
-            data["paySign"] = wx_sign(data)
-            data["id"] = transaction.id
-
-            self.response(data)
+            self.response()
         except ParameterInvalidException as e:
             self.response_request_error(e)
         except Exception as e:
