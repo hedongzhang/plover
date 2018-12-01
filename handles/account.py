@@ -27,16 +27,16 @@ class AccountHandler(BasicHandler):
 
             with open_session() as session:
                 user = session.query(User).filter(User.id == user_id).one()
-                balance = session.query(Account).filter(Account.id == user.balance_id).one()
+                account = session.query(Account).filter(Account.id == user.account_id).one()
 
                 data = dict()
-                data["id"] = balance.id
+                data["id"] = account.id
                 data["user_id"] = user.id
-                data["amount"] = balance.amount.__str__()
-                data["deposit"] = balance.deposit.__str__()
-                data["state"] = balance.state
-                data["description"] = balance.description
-                data["update_time"] = balance.update_time.strftime("%Y-%m-%d %H:%M:%S")
+                data["amount"] = account.amount.__str__()
+                data["deposit"] = account.deposit.__str__()
+                data["state"] = account.state
+                data["description"] = account.description
+                data["update_time"] = account.update_time.strftime("%Y-%m-%d %H:%M:%S")
                 data["income"] = 0
                 data["transaction_list"] = list()
 

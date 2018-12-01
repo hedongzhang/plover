@@ -53,7 +53,7 @@ class UserHandler(BasicHandler):
                 data["state"] = user.state
                 data["undone_order_count"] = undone_order_count
                 data["unread_message_count"] = unread_message_count
-                data["amount"] = balance.amount.__str__()
+                data["amount"] = account.amount.__str__()
 
             self.response(data)
         except ParameterInvalidException as e:
