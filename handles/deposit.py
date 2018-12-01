@@ -15,7 +15,7 @@ from decimal import Decimal
 from handles.base import BasicHandler, CallbackHandler
 from handles.base import CALLBACK_RESPONSE_SUCESS_CODE
 from model.base import open_session
-from model.schema import TransactionNonOrder, Account
+from model.schema import TransactionNonOrder, Account, User
 from utiles.exception import ParameterInvalidException, PlException
 from utiles import random_tool
 
@@ -97,9 +97,13 @@ class DepositCallbackHandler(CallbackHandler):
                 transaction.wx_transaction_id = request_args["transaction_id"]
                 transaction.state = TransactionNonOrder.STATE_FINISH
                 transaction.description = "支付成功"
-
+                # 更新账户
                 account = session.query(Account).filter(Account.user_id == transaction.user_id).one()
                 account.deposit += transaction.amount
+                # 更新用户状态
+                user = session.query(User).filter(User.id == transaction.user_id).one()
+                user.state += User.STATE_CERTIFICATION
+                user.description = "已认证"
 
             self.response()
         except ParameterInvalidException as e:

@@ -42,11 +42,14 @@ class BasicHandler(tornado.web.RequestHandler):
         self.session_id = ""
         super(BasicHandler, self).__init__(application, request, **kwargs)
 
+    def set_default_headers(self):
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+
     def response(self, data=None, status=RESPONSE_STATUS_SUCESS, message=RESPONSE_MESSAGE_SUCESS):
         if not data:
             data = dict()
         return_request = dict(status=status, message=message, data=data)
-        self.write(json.dumps(return_request))
+        self.write(return_request)
 
     def response_request_error(self, message):
         status = RESPONSE_STATUS_REQUEST_ERROR
@@ -82,6 +85,9 @@ class CallbackHandler(tornado.web.RequestHandler):
     def __init__(self, application, request, **kwargs):
         self.session_id = ""
         super(CallbackHandler, self).__init__(application, request, **kwargs)
+
+    def set_default_headers(self):
+        self.set_header("Content-Type", "application/xml; charset=UTF-8")
 
     def response(self, return_code=CALLBACK_RESPONSE_SUCESS_CODE, return_msg=CALLBACK_RESPONSE_SUCESS_MSG):
         response_args = dict(return_code=return_code, return_msg=return_msg)
