@@ -136,7 +136,7 @@ def deposit():
     缴纳押金
     :return: 
     """
-    url = BASE_URL + "user/deposit"
+    url = BASE_URL + "user/account/actions/deposit"
 
     for i in range(USER_NUM):
         if random_tool.random_int(1):

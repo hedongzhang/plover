@@ -25,8 +25,10 @@ handlers:
   handler: handles.message.MessagesHandler
 - url: /api/user/account
   handler: handles.account.AccountHandler
-- url: /api/user/deposit
-  handler: handles.deposit.DepositHandler
+- url: /api/user/account/actions/deposit
+  handler: handles.account.DepositHandler
+- url: /api/user/account/actions/withdraw
+  handler: handles.account.WithdrawHandler
 - url: /api/verification
   handler: handles.verification.VerificationHandler
 - url: /api/upload
@@ -35,5 +37,5 @@ handlers:
   handler: handles.config.ConfigHandler
 
 # 回调API
-- url: /api/user/deposit/(\d+)$
-  handler: handles.deposit.DepositCallbackHandler
+- url: /api/user/account/actions/deposit/(\d+)$
+  handler: handles.account.DepositCallbackHandler
