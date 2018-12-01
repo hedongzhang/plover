@@ -36,7 +36,7 @@ class User(Entity):
 
     openid = Column(Integer, nullable=False, unique=True, doc="微信用户的openid")
     unionid = Column(Integer, nullable=False, unique=True, doc="微信用户的unionid")
-    balance_id = Column(Integer, nullable=False, unique=True, doc="账户id, -1表示刚刚注册，在创建账户时中断")
+    account_id = Column(Integer, nullable=False, unique=True, doc="账户id, -1表示刚刚注册，在创建账户时中断")
     nick_name = Column(String(length=64), doc="昵称")
     avatar_url = Column(String(length=256), doc="头像URL")
     gender = Column(Integer, nullable=False, doc="性别: 0-未知, 1-男, 2-女")

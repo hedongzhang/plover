@@ -47,6 +47,7 @@ class DepositHandler(BasicHandler):
             paySign = "22D9B4E54AB1950F51E0649E8810ACD6"
 
             data = dict()
+            data["id"] = transaction.id
             data["timeStamp"] = str(int(time.time()))
             data["nonceStr"] = transaction_id
             data["package"] = "prepay_id={prepay_id}".format(prepay_id=prepay_id)
@@ -97,8 +98,8 @@ class DepositCallbackHandler(CallbackHandler):
                 transaction.state = TransactionNonOrder.STATE_FINISH
                 transaction.description = "支付成功"
 
-                balance = session.query(Account).filter(Account.user_id == transaction.user_id).one()
-                balance.deposit += transaction.amount
+                account = session.query(Account).filter(Account.user_id == transaction.user_id).one()
+                account.deposit += transaction.amount
 
             self.response()
         except ParameterInvalidException as e:

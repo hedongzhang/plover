@@ -14,12 +14,15 @@ import json
 
 from tornado import httpclient
 
+from utiles import xml
 
-def get(url, args, timeout=60):
+
+def get(url, args, format="json", timeout=60):
     """
     发起GET请求, 注意: 仅支持json格式协议
     :param url: 
     :param args: 字典格式的参数类型
+    :param format: 协议格式
     :param timeout: 
     :return: 
     """
@@ -29,23 +32,48 @@ def get(url, args, timeout=60):
         url += "?" + args_str
         http_request = httpclient.HTTPRequest(url=url, method="GET", request_timeout=timeout)
         response = http_client.fetch(http_request)
-        return json.loads(response.body)
+
+        if format == "json":
+            ret = json.loads(response.body)
+        elif format == "xml":
+            ret = xml.loads(response.body)
+        else:
+            raise Exception("format is invalid")
+
+        return ret
     finally:
         http_client.close()
 
 
-def post(url, args, timeout=60):
+def post(url, args, format="json", timeout=60):
     """
-    发起POST请求, 注意: 仅支持json格式协议
+    发起POST请求
     :param url: 
     :param args: 字典格式的参数类型
+    :param format: 协议格式
     :param timeout: 
     :return: 
     """
     http_client = httpclient.HTTPClient()
-    http_request = httpclient.HTTPRequest(url=url, method="POST", body=json.dumps(args), request_timeout=timeout)
+
+    if format == "json":
+        body = json.dumps(args)
+    elif format == "xml":
+        body = xml.dumps(args)
+    else:
+        raise Exception("format is invalid")
+
+    http_request = httpclient.HTTPRequest(url=url, method="POST", body=body, request_timeout=timeout)
     response = http_client.fetch(http_request)
-    return json.loads(response.body)
+
+    if format == "json":
+        ret = json.loads(response.body)
+    elif format == "xml":
+        ret = xml.loads(response.body)
+    else:
+        raise Exception("format is invalid")
+
+    return ret
 
 
 if __name__ == '__main__':

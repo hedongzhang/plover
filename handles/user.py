@@ -28,7 +28,7 @@ class UserHandler(BasicHandler):
 
             with open_session() as session:
                 user = session.query(User).filter(User.id == user_id).one()
-                balance = session.query(Account).filter(Account.id == user.balance_id).one()
+                account = session.query(Account).filter(Account.id == user.account_id).one()
 
                 undone_order_count = session.query(Order).filter(
                     and_(

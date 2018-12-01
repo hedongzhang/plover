@@ -13,7 +13,7 @@ Description:
 import json
 
 from conf import config
-from handles.base import RESPONSE_STATUS_SUCESS
+from handles.base import RESPONSE_STATUS_SUCESS, CALLBACK_RESPONSE_SUCESS_CODE
 from model import base, schema
 from utiles import httpclient, random_tool
 
@@ -131,6 +131,38 @@ def add_system_config():
         raise Exception("Mock plover config failed!")
 
 
+def deposit():
+    """
+    缴纳押金
+    :return: 
+    """
+    url = BASE_URL + "user/deposit"
+
+    for i in range(USER_NUM):
+        if random_tool.random_int(1):
+            post_vars = dict(
+                user_id=i + 1,
+                amount=random_tool.random_int(10000, start=100) / 100
+            )
+            args = dict(session_id=SESSION_ID, post_vars=post_vars)
+            print("deposit:{post_vars}".format(post_vars=post_vars))
+            ret = httpclient.post(url, args)
+            if ret["status"] != RESPONSE_STATUS_SUCESS:
+                raise Exception("deposit user_id:%s failed!" % i + 1)
+
+            url1 = url + "/%s" % ret["data"]["id"]
+            args1 = dict(
+                return_code="SUCCESS",
+                return_msg="OK",
+                total_fee=post_vars["amount"],
+                sign="B552ED6B279343CB493C5DD0D78AB241",
+                transaction_id=random_tool.random_string()
+            )
+            ret1 = httpclient.post(url1, args1, format="xml")
+            if ret1["return_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
+                raise Exception("deposit user_id:%s callback failed!" % i + 1)
+
+
 if __name__ == "__main__":
     clear_db()
     create_user()
@@ -138,3 +170,4 @@ if __name__ == "__main__":
     add_user_address()
     add_user_message()
     add_system_config()
+    deposit()

@@ -42,7 +42,7 @@ class BasicHandler(tornado.web.RequestHandler):
         self.session_id = ""
         super(BasicHandler, self).__init__(application, request, **kwargs)
 
-    def response(self, status=RESPONSE_STATUS_SUCESS, message=RESPONSE_MESSAGE_SUCESS, data=None):
+    def response(self, data=None, status=RESPONSE_STATUS_SUCESS, message=RESPONSE_MESSAGE_SUCESS):
         if not data:
             data = dict()
         return_request = dict(status=status, message=message, data=data)

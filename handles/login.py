@@ -62,10 +62,10 @@ class LoginHandler(BasicHandler):
                 session.add(user)
                 session.flush()
 
-                balance = Account(user_id=user.id, amount=0, deposit=0, state=Account.STATE_NORMAL)
-                session.add(balance)
+                account = Account(user_id=user.id, amount=0, deposit=0, state=Account.STATE_NORMAL)
+                session.add(account)
                 session.flush()
-                user.balance_id = balance.id
+                user.account_id = account.id
 
             session_id = random_tool.random_string()
             user_session = session.query(Session).filter(Session.user_id == user.id).one_or_none()
