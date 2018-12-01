@@ -16,7 +16,7 @@ from model.schema import Address
 from utiles.exception import ParameterInvalidException
 
 
-properties = ["user_id", "type", "property", "nick_name", "first_name", "last_name", "phone",
+properties = ["user_id", "type", "property", "shop_name", "first_name", "last_name", "phone",
               "first_address", "last_address", "latitude", "longitude", "default"]
 
 
@@ -34,7 +34,7 @@ class AddressHandler(BasicHandler):
                 data["user_id"] = address.user_id
                 data["type"] = address.type
                 data["property"] = address.property
-                data["nick_name"] = address.nick_name
+                data["shop_name"] = address.shop_name
                 data["first_name"] = address.first_name
                 data["last_name"] = address.last_name
                 data["phone"] = address.phone
@@ -65,7 +65,7 @@ class AddressHandler(BasicHandler):
                     user_id=request_args["user_id"],
                     type=request_args["type"],
                     property=request_args["property"],
-                    nick_name=request_args["nick_name"],
+                    shop_name=request_args["shop_name"],
                     first_name=request_args["first_name"],
                     last_name=request_args["last_name"],
                     phone=request_args["phone"],
@@ -76,8 +76,10 @@ class AddressHandler(BasicHandler):
                     default=request_args["default"]
                 )
                 session.add(address)
+                session.flush()
 
-            self.response()
+            data = dict(id=address.id)
+            self.response(data)
         except ParameterInvalidException as e:
             self.response_request_error(e)
         except Exception as e:
@@ -197,7 +199,7 @@ class AddressesHandler(BasicHandler):
                     address_info["user_id"] = address.user_id
                     address_info["type"] = address.type
                     address_info["property"] = address.property
-                    address_info["nick_name"] = address.nick_name
+                    address_info["shop_name"] = address.shop_name
                     address_info["first_name"] = address.first_name
                     address_info["last_name"] = address.last_name
                     address_info["phone"] = address.phone

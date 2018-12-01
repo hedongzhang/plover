@@ -72,7 +72,7 @@ def add_user_address():
                 user_id=i + 1,
                 type=random_tool.random_int(1),
                 property=random_tool.random_int(2),
-                nick_name=random_tool.random_chinese(6),
+                shop_name=random_tool.random_chinese(6),
                 first_name=random_tool.random_chinese(1),
                 last_name=random_tool.random_chinese(2),
                 phone="1" + random_tool.random_digits(10),

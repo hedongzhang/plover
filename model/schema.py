@@ -106,7 +106,7 @@ class Address(Entity):
     PROPERTY_PUBLIC = 2
 
     user_id = Column(Integer, nullable=False, doc="用户id")
-    nick_name = Column(String(length=64), doc="昵称")
+    shop_name = Column(String(length=64), doc="商家名称")
     type = Column(Integer, nullable=False, default=0, doc="类型: 0-取货地址, 1-收货地址")
     property = Column(Integer, nullable=False, doc="属性: 0-女性场所, 1-男性场所, 2-公共场所")
     first_name = Column(String(length=64), doc="名")
