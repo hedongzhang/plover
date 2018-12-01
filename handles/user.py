@@ -16,7 +16,7 @@ from sqlalchemy import and_, or_
 
 from handles.base import BasicHandler
 from model.base import open_session
-from model.schema import User, Balance, Order, Message, Verification
+from model.schema import User, Account, Order, Message, Verification
 from utiles.exception import ParameterInvalidException, PlException
 
 
@@ -28,7 +28,7 @@ class UserHandler(BasicHandler):
 
             with open_session() as session:
                 user = session.query(User).filter(User.id == user_id).one()
-                balance = session.query(Balance).filter(Balance.id == user.balance_id).one()
+                balance = session.query(Account).filter(Account.id == user.balance_id).one()
 
                 undone_order_count = session.query(Order).filter(
                     and_(

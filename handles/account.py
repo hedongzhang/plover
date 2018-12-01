@@ -15,11 +15,11 @@ import json
 from conf import config
 from handles.base import BasicHandler
 from model.base import open_session
-from model.schema import User, Balance, TransactionOrder
+from model.schema import User, Account, TransactionOrder
 from utiles.exception import ParameterInvalidException
 
 
-class BalanceHandler(BasicHandler):
+class AccountHandler(BasicHandler):
     def get(self):
         try:
             session_id = self.get_argument("session_id")
@@ -27,7 +27,7 @@ class BalanceHandler(BasicHandler):
 
             with open_session() as session:
                 user = session.query(User).filter(User.id == user_id).one()
-                balance = session.query(Balance).filter(Balance.id == user.balance_id).one()
+                balance = session.query(Account).filter(Account.id == user.balance_id).one()
 
                 data = dict()
                 data["id"] = balance.id

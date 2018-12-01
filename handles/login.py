@@ -15,7 +15,7 @@ from tornado import gen
 from conf import config
 from handles.base import executor, BasicHandler
 from model.base import open_session
-from model.schema import User, Balance, Session
+from model.schema import User, Account, Session
 from utiles import httpclient, random_tool
 from utiles.exception import ParameterInvalidException
 
@@ -62,7 +62,7 @@ class LoginHandler(BasicHandler):
                 session.add(user)
                 session.flush()
 
-                balance = Balance(user_id=user.id, amount=0, deposit=0, state=Balance.STATE_NORMAL)
+                balance = Account(user_id=user.id, amount=0, deposit=0, state=Account.STATE_NORMAL)
                 session.add(balance)
                 session.flush()
                 user.balance_id = balance.id

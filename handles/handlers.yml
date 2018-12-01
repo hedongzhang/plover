@@ -23,8 +23,8 @@ handlers:
   handler: handles.message.MessageHandler
 - url: /api/user/messages
   handler: handles.message.MessagesHandler
-- url: /api/user/balance
-  handler: handles.balance.BalanceHandler
+- url: /api/user/account
+  handler: handles.account.AccountHandler
 - url: /api/user/deposit
   handler: handles.deposit.DepositHandler
 - url: /api/verification

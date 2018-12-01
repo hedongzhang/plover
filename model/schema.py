@@ -123,11 +123,11 @@ class Address(Entity):
     update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
 
 
-class Balance(Entity):
+class Account(Entity):
     """
         用户账户表
     """
-    __tablename__ = "balance"
+    __tablename__ = "account"
 
     STATE_FREEZE = 0
     STATE_NORMAL = 1

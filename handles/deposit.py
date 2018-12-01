@@ -15,7 +15,7 @@ from decimal import Decimal
 from handles.base import BasicHandler, CallbackHandler
 from handles.base import CALLBACK_RESPONSE_SUCESS_CODE
 from model.base import open_session
-from model.schema import TransactionNonOrder, Balance
+from model.schema import TransactionNonOrder, Account
 from utiles.exception import ParameterInvalidException, PlException
 from utiles import random_tool
 
@@ -97,7 +97,7 @@ class DepositCallbackHandler(CallbackHandler):
                 transaction.state = TransactionNonOrder.STATE_FINISH
                 transaction.description = "支付成功"
 
-                balance = session.query(Balance).filter(Balance.user_id == transaction.user_id).one()
+                balance = session.query(Account).filter(Account.user_id == transaction.user_id).one()
                 balance.deposit += transaction.amount
 
             self.response()
