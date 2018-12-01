@@ -43,31 +43,35 @@ class DepositHandler(BasicHandler):
                     description="等待微信支付押金"
                 )
                 session.add(transaction)
+                session.flush()
 
-            # 调用统一下单API
-            unifiedorder_args = dict(
-                appid=config.get("appid"),
-                mch_id=config.get("mch_id"),
-                nonce_str=transaction_id,
-                body="缴纳押金",
-                out_trade_no=transaction_id,
-                total_fee=request_args["amount"],
-                spbill_create_ip=self.request.remote_ip,
-                notify_url="https://{hostname}:{port}/api/user/deposit/{transaction_id}".format(
-                    hostname=config.get("https_domain_name"),
-                    port=config.get("https_listen_port"),
-                    transaction_id=transaction_id),
-                trade_type="JSAPI"
-            )
-            unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
-            if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
-                raise PlException("调用微信统一下单接口失败:%s" % unifiedorder_ret["return_msg"])
+            if config.get("debug"):
+                prepay_id = "wx201411101639507cbf6ffd8b0779950874"
+            else:
+                # 调用统一下单API
+                unifiedorder_args = dict(
+                    appid=config.get("appid"),
+                    mch_id=config.get("mch_id"),
+                    nonce_str=transaction_id,
+                    body="deposit",
+                    out_trade_no=transaction_id,
+                    total_fee=request_args["amount"],
+                    spbill_create_ip=self.request.remote_ip,
+                    notify_url="https://{hostname}:{port}/api/user/deposit/{transaction_id}".format(
+                        hostname=config.get("https_domain_name"),
+                        port=config.get("https_listen_port"),
+                        transaction_id=transaction.id),
+                    trade_type="JSAPI"
+                )
+                unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
+                if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
+                    raise PlException("调用微信统一下单接口失败:%s" % unifiedorder_ret["return_msg"])
 
-            if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
-                raise PlException("调用微信统一下单接口出错 err_code:%s err_code_des:%s " % (
-                    unifiedorder_ret["err_code"], unifiedorder_ret["err_code_des"]))
+                if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
+                    raise PlException("调用微信统一下单接口出错 err_code:%s err_code_des:%s " % (
+                        unifiedorder_ret["err_code"], unifiedorder_ret["err_code_des"]))
 
-            prepay_id = unifiedorder_ret["prepay_id"]
+                prepay_id = unifiedorder_ret["prepay_id"]
 
             # 生成签名
             data = dict()
