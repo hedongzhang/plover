@@ -14,7 +14,7 @@ from conf import config
 from model import base
 from model import schema
 from utiles import httpclient, random_tool
-from handles.base import RESPONSE_STATUS_SUCESS
+from handles.base import RESPONSE_STATUS_SUCCESS
 
 BASE_URL = "https://{hostname}:{port}/api/".format(hostname=config.get("https_domain_name"),
                                                    port=config.get("https_listen_port"))
@@ -25,9 +25,9 @@ def add_system_config():
     url = BASE_URL + "config"
 
     post_vars = dict(
-        amount_per_order=2,
-        draw_cratio=0.2,
-        deposit=20,
+        amount_per_order="2.2",
+        draw_cratio="0.2",
+        deposit="20",
         # 文案
         master_title="这次，不需要自己拿",
         master_desc="即使再忙，也别太累",
@@ -38,7 +38,7 @@ def add_system_config():
     args = dict(session_id=SESSION_ID, post_vars=post_vars)
     print("init plover config:{post_vars}".format(post_vars=post_vars))
     ret = httpclient.post(url, args)
-    if ret["status"] != RESPONSE_STATUS_SUCESS:
+    if ret["status"] != RESPONSE_STATUS_SUCCESS:
         raise Exception("init plover config failed!")
 
 

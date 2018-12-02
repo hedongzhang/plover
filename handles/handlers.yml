@@ -37,7 +37,13 @@ handlers:
   handler: handles.upload.UploadHandler
 - url: /api/config
   handler: handles.config.ConfigHandler
+- url: /api/order
+  handler: handles.order.OrderHandler
+- url: /api/order/actions/calculate
+  handler: handles.order.CalculateHandler
 
 # 回调API
 - url: /api/user/account/actions/deposit/(\d+)$
   handler: handles.account.DepositCallbackHandler
+- url: /api/order/(\d+)$
+  handler: handles.order.OrderCallbackHandler

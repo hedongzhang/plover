@@ -21,8 +21,8 @@ from utiles import xml
 
 executor = ThreadPoolExecutor(max_workers=32)
 
-RESPONSE_STATUS_SUCESS = 200
-RESPONSE_MESSAGE_SUCESS = "请求成功"
+RESPONSE_STATUS_SUCCESS = 200
+RESPONSE_MESSAGE_SUCCESS = "请求成功"
 
 RESPONSE_STATUS_REQUEST_ERROR = 400
 RESPONSE_MESSAGE_REQUEST_ERRER = "Request Error: {error_message}"
@@ -30,8 +30,8 @@ RESPONSE_MESSAGE_REQUEST_ERRER = "Request Error: {error_message}"
 RESPONSE_STATUS_SERVER_ERROR = 500
 RESPONSE_MESSAGE_SERVER_ERROR = "Server Error: {error_message}"
 
-CALLBACK_RESPONSE_SUCESS_CODE = "SUCCESS"
-CALLBACK_RESPONSE_SUCESS_MSG = "OK"
+CALLBACK_RESPONSE_SUCCESS_CODE = "SUCCESS"
+CALLBACK_RESPONSE_SUCCESS_MSG = "OK"
 
 CALLBACK_RESPONSE_ERROR_CODE = "FAIL"
 CALLBACK_RESPONSE_ERROR_MSG = ""
@@ -45,7 +45,7 @@ class BasicHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
 
-    def response(self, data=None, status=RESPONSE_STATUS_SUCESS, message=RESPONSE_MESSAGE_SUCESS):
+    def response(self, data=None, status=RESPONSE_STATUS_SUCCESS, message=RESPONSE_MESSAGE_SUCCESS):
         if not data:
             data = dict()
         return_request = dict(status=status, message=message, data=data)
@@ -89,7 +89,7 @@ class CallbackHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Content-Type", "application/xml; charset=UTF-8")
 
-    def response(self, return_code=CALLBACK_RESPONSE_SUCESS_CODE, return_msg=CALLBACK_RESPONSE_SUCESS_MSG):
+    def response(self, return_code=CALLBACK_RESPONSE_SUCCESS_CODE, return_msg=CALLBACK_RESPONSE_SUCCESS_MSG):
         response_args = dict(return_code=return_code, return_msg=return_msg)
         self.write(xml.dumps(response_args))
 

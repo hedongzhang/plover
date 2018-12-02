@@ -13,7 +13,8 @@ Description:
 import json
 
 from conf import config
-from handles.base import RESPONSE_STATUS_SUCESS, CALLBACK_RESPONSE_SUCESS_CODE
+from handles.base import RESPONSE_STATUS_SUCCESS, CALLBACK_RESPONSE_SUCCESS_CODE
+from handles.wx_api import wx_sign
 from model import base, schema
 from utiles import httpclient, random_tool
 
@@ -38,7 +39,7 @@ def create_user():
 
         print("create user appid:{appid} secret:{secret} js_code:{js_code}".format(**post_vars))
         ret = httpclient.post(url, args)
-        if ret["status"] != RESPONSE_STATUS_SUCESS:
+        if ret["status"] != RESPONSE_STATUS_SUCCESS:
             raise Exception("Mock user failed!")
 
 
@@ -59,7 +60,7 @@ def register_user():
 
         print("register user user_id:{user_id}".format(**post_vars))
         ret = httpclient.post(url, args)
-        if ret["status"] != RESPONSE_STATUS_SUCESS:
+        if ret["status"] != RESPONSE_STATUS_SUCCESS:
             raise Exception("Register user failed: %s" % ret["message"])
 
 
@@ -86,7 +87,7 @@ def add_user_address():
             args = dict(session_id=SESSION_ID, post_vars=post_vars)
             print("add user:{user_id} address".format(**post_vars))
             ret = httpclient.post(url, args)
-            if ret["status"] != RESPONSE_STATUS_SUCESS:
+            if ret["status"] != RESPONSE_STATUS_SUCCESS:
                 raise Exception("Mock user address failed!")
 
 
@@ -106,7 +107,7 @@ def add_user_message():
             args = dict(session_id=SESSION_ID, post_vars=post_vars)
             print("add user:{user_id} message".format(**post_vars))
             ret = httpclient.post(url, args)
-            if ret["status"] != RESPONSE_STATUS_SUCESS:
+            if ret["status"] != RESPONSE_STATUS_SUCCESS:
                 raise Exception("Mock user message failed!")
 
 
@@ -114,9 +115,9 @@ def add_system_config():
     url = BASE_URL + "config"
 
     post_vars = dict(
-        amount_per_order=2,
-        draw_cratio=0.2,
-        deposit=20,
+        amount_per_order="2.2",
+        draw_cratio="0.2",
+        deposit="20",
         # 文案
         master_title="这次，不需要自己拿",
         master_desc="即使再忙，也别太累",
@@ -127,7 +128,7 @@ def add_system_config():
     args = dict(session_id=SESSION_ID, post_vars=post_vars)
     print("init plover config:{post_vars}".format(post_vars=post_vars))
     ret = httpclient.post(url, args)
-    if ret["status"] != RESPONSE_STATUS_SUCESS:
+    if ret["status"] != RESPONSE_STATUS_SUCCESS:
         raise Exception("Mock plover config failed!")
 
 
@@ -147,7 +148,7 @@ def deposit():
             args = dict(session_id=SESSION_ID, post_vars=post_vars)
             print("deposit:{post_vars}".format(post_vars=post_vars))
             ret = httpclient.post(url, args)
-            if ret["status"] != RESPONSE_STATUS_SUCESS:
+            if ret["status"] != RESPONSE_STATUS_SUCCESS:
                 raise Exception("deposit user_id:%s failed!" % i + 1)
 
             url1 = url + "/%s" % ret["data"]["id"]
@@ -155,12 +156,13 @@ def deposit():
                 return_code="SUCCESS",
                 return_msg="OK",
                 total_fee=post_vars["amount"],
-                sign="B552ED6B279343CB493C5DD0D78AB241",
                 transaction_id=random_tool.random_string()
             )
+            args1["sign"] = wx_sign(args1)
+
             ret1 = httpclient.post(url1, args1, format="xml")
-            if ret1["return_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
-                raise Exception("deposit user_id:%s callback failed!" % i + 1)
+            if ret1["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                raise Exception("deposit user_id:%s callback failed! err:%s" % (i + 1, ret1["return_msg"]))
 
 
 if __name__ == "__main__":

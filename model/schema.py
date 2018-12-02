@@ -172,15 +172,15 @@ class Order(Entity):
     STATE_CANCEL = 6
 
     master_id = Column(Integer, nullable=False, doc="雇主id")
-    slave_id = Column(Integer, nullable=False, doc="佣兵id")
+    slave_id = Column(Integer, nullable=False, default=-1, doc="佣兵id")
     takeaway_id = Column(Integer, nullable=False, doc="外卖id")
     amount = Column(DECIMAL(10, 2), nullable=False, doc="订单金额")
-    tip = Column(DECIMAL(10, 2), nullable=False, doc="小费")
+    tip = Column(DECIMAL(10, 2), nullable=False, default=0, doc="小费")
     verification_code = Column(String(length=64), nullable=False, doc="验证码")
     state = Column(Integer, nullable=False, doc="状态: 0-未支付，1-未接单，2-已接单，3-配送中，4-已送达, 5-完成, 6-已取消")
-    order_time = Column(DateTime, default=datetime.now, doc="接单时间utc")
-    distribution_time = Column(DateTime, default=datetime.now, doc="配送时间utc")
-    finish_time = Column(DateTime, default=datetime.now, doc="完成时间utc")
+    order_time = Column(DateTime, doc="接单时间utc")
+    distribution_time = Column(DateTime, doc="配送时间utc")
+    finish_time = Column(DateTime, doc="完成时间utc")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
@@ -197,11 +197,10 @@ class Takeaway(Entity):
     STATE_ARRIVE = 1
 
     name = Column(String(length=64), doc="名称")
-    start_addr_id = Column(Integer, nullable=False, doc="起始地址id")
-    end_addr_id = Column(Integer, nullable=False, doc="送达地址id")
-    number = Column(Integer, nullable=False, doc="份数")
+    tack_address_id = Column(Integer, nullable=False, doc="起始地址id")
+    recive_address_id = Column(Integer, nullable=False, doc="送达地址id")
     state = Column(Integer, nullable=False, doc="状态: 0-未到中转站，1-已到中转站")
-    distribution_time = Column(DateTime, default=datetime.now, doc="确认到达中转站时间utc")
+    distribution_time = Column(DateTime, doc="确认到达中转站时间utc")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
@@ -218,10 +217,19 @@ class TransactionOrder(Entity):
     TYPE_COLLECT = 1
     TYPE_CANCEL = 2
 
+    WX_TRANSACTION_ID = 0
+
+    STATE_UNFINISH = 0
+    STATE_FINISH = 1
+    STATE_FAILED = 2
+    STATE_ABNORMAL = 3
+
     user_id = Column(Integer, nullable=False, doc="用户id")
     order_id = Column(Integer, nullable=False, doc="订单id")
-    wx_transaction_id = Column(String(length=64), nullable=False, doc="订单id")
+    transaction_id = Column(String(length=128), nullable=False, doc="交易id")
+    wx_transaction_id = Column(String(length=64), nullable=False, doc="微信交易id, 0-未实际发生微信交易")
     type = Column(Integer, nullable=False, doc="0-雇主下单，1-佣兵收款，2-雇主取消订单")
+    state = Column(Integer, nullable=False, doc="交易状态，0-未完成，1-已完成, 2-交易失败, 3-交易异常")
     amount = Column(DECIMAL(10, 2), nullable=False, doc="交易金额")
     commission = Column(DECIMAL(10, 2), nullable=False, doc="平台佣金")
 

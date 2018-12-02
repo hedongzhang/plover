@@ -16,7 +16,7 @@ from decimal import Decimal
 from tornado import gen
 
 from handles.base import BasicHandler, CallbackHandler, executor
-from handles.base import CALLBACK_RESPONSE_SUCESS_CODE
+from handles.base import CALLBACK_RESPONSE_SUCCESS_CODE
 from handles.wx_api import unifiedorder, wx_sign
 from model.base import open_session
 from model.schema import TransactionOrder, TransactionNonOrder, Account, User
@@ -128,17 +128,17 @@ class DepositHandler(BasicHandler):
                     out_trade_no=transaction_id,
                     total_fee=request_args["amount"],
                     spbill_create_ip=self.request.remote_ip,
-                    notify_url="https://{hostname}:{port}/api/user/deposit/{transaction_id}".format(
+                    notify_url="https://{hostname}:{port}/api/user/account/actions/deposit/{transaction_id}".format(
                         hostname=config.get("https_domain_name"),
                         port=config.get("https_listen_port"),
                         transaction_id=transaction.id),
                     trade_type="JSAPI"
                 )
                 unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
-                if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
+                if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
                     raise PlException("调用微信统一下单接口失败:%s" % unifiedorder_ret["return_msg"])
 
-                if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
+                if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
                     raise PlException("调用微信统一下单接口出错 err_code:%s err_code_des:%s " % (
                         unifiedorder_ret["err_code"], unifiedorder_ret["err_code_des"]))
 
@@ -177,17 +177,17 @@ class DepositCallbackHandler(CallbackHandler):
                     self.response()
                     return
 
-                if request_args["return_code"] != CALLBACK_RESPONSE_SUCESS_CODE:
+                if request_args["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
                     transaction.wx_transaction_id = request_args["transaction_id"]
                     transaction.state = TransactionNonOrder.STATE_FAILED
                     transaction.description = "支付失败:%s" % request_args["return_msg"]
                     self.response()
                     return
 
-                # TODO:验证签名
-                sign = request_args["sign"]
-                if not sign:
-                    raise PlException("签名失败")
+                # 校验签名
+                sign = request_args.pop("sign")
+                if sign != wx_sign(request_args):
+                    raise PlException("校验签名失败")
 
                 # 验证交易金额
                 if Decimal(request_args["total_fee"]) != transaction["amount"]:
