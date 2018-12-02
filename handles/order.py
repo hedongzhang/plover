@@ -168,7 +168,7 @@ class OrderHandler(BasicHandler):
                     nonce_str=transactionorder.transaction_id,
                     body="order",
                     out_trade_no=transactionorder.transaction_id,
-                    total_fee=order.amount * 100,
+                    total_fee=Decimal(str(order.amount)) * Decimal("100"),
                     spbill_create_ip=self.request.remote_ip,
                     notify_url="https://{hostname}:{port}/api/order/{transaction_id}".format(
                         hostname=config.get("https_domain_name"),
@@ -409,7 +409,7 @@ class AddtipHandler(BasicHandler):
                     nonce_str=transactionorder.transaction_id,
                     body="add tip",
                     out_trade_no=transactionorder.transaction_id,
-                    total_fee=request_args["amount"] * 100,
+                    total_fee=Decimal(str(request_args["amount"])) * Decimal("100"),
                     spbill_create_ip=self.request.remote_ip,
                     notify_url="https://{hostname}:{port}/api/order/actions/addtip/{transaction_id}".format(
                         hostname=config.get("https_domain_name"),
@@ -473,7 +473,7 @@ class OrderCallbackHandler(CallbackHandler):
                     raise PlException("校验签名失败")
 
                 # 验证交易金额
-                if Decimal(request_args["total_fee"]) != transaction["amount"] * 100:
+                if Decimal(request_args["total_fee"]) != Decimal(str(transaction["amount"])) * Decimal("100"):
                     raise PlException("支付金额不对应")
 
                 # 交易成功，更新交易状态
@@ -527,7 +527,7 @@ class AddtipCallbackHandler(CallbackHandler):
                     raise PlException("校验签名失败")
 
                 # 验证交易金额
-                if Decimal(request_args["total_fee"]) != transaction["amount"] * 100:
+                if Decimal(request_args["total_fee"]) != Decimal(str(transaction["amount"])) * Decimal("100"):
                     raise PlException("支付金额不对应")
 
                 # 交易成功，更新交易状态

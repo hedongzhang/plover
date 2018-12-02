@@ -126,7 +126,7 @@ class DepositHandler(BasicHandler):
                     nonce_str=transaction_id,
                     body="deposit",
                     out_trade_no=transaction_id,
-                    total_fee=request_args["amount"] * 100,
+                    total_fee=Decimal(str(request_args["amount"])) * Decimal("100"),
                     spbill_create_ip=self.request.remote_ip,
                     notify_url="https://{hostname}:{port}/api/user/account/actions/deposit/{transaction_id}".format(
                         hostname=config.get("https_domain_name"),
@@ -190,7 +190,7 @@ class DepositCallbackHandler(CallbackHandler):
                     raise PlException("校验签名失败")
 
                 # 验证交易金额
-                if Decimal(request_args["total_fee"]) != transaction["amount"] * 100:
+                if Decimal(request_args["total_fee"]) != Decimal(str(transaction["amount"])) * Decimal("100"):
                     raise PlException("支付金额不对应")
 
                 # 交易成功

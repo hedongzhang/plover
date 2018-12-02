@@ -141,9 +141,10 @@ def deposit():
 
     for i in range(USER_NUM):
         if random_tool.random_int(1):
+            amount = random_tool.random_int(10000, start=100)
             post_vars = dict(
                 user_id=i + 1,
-                amount=random_tool.random_int(10000, start=100) / 100
+                amount=amount / 100
             )
             args = dict(session_id=SESSION_ID, post_vars=post_vars)
             print("deposit:{post_vars}".format(post_vars=post_vars))
@@ -155,7 +156,7 @@ def deposit():
             args1 = dict(
                 return_code="SUCCESS",
                 return_msg="OK",
-                total_fee=post_vars["amount"],
+                total_fee=amount,
                 transaction_id=random_tool.random_string()
             )
             args1["sign"] = wx_sign(args1)
