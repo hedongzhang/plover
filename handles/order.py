@@ -22,7 +22,7 @@ from handles.base import BasicHandler, CallbackHandler, executor
 from handles.base import CALLBACK_RESPONSE_SUCCESS_CODE
 from handles.wx_api import unifiedorder, wx_sign
 from model.base import open_session
-from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User
+from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User, Account
 from utiles.exception import ParameterInvalidException, PlException
 from utiles.random_tool import random_string
 
@@ -370,6 +370,286 @@ class SuggestHandler(BasicHandler):
 
 
 class AddtipHandler(BasicHandler):
+    @gen.coroutine
+    def post(self):
+        try:
+            necessary_list = ["order_id", "amount"]
+            request_args = self.request_args(necessary_list=necessary_list)
+
+            with open_session() as session:
+                # 参数校验
+                order = session.query(Order).filter(Order.id == request_args["order_id"]).one_or_none()
+                if not order:
+                    raise ParameterInvalidException("此订单不存在")
+                if order.state not in [Order.STATE_NOORDER, Order.STATE_ORDERS, Order.STATE_DISTRIBUTION]:
+                    raise PlException("此订单状态无法增加小费")
+
+                # 生成交易数据
+                transactionorder = TransactionOrder(
+                    order_id=order.id,
+                    user_id=order.master_id,
+                    transaction_id=random_string(),
+                    wx_transaction_id=TransactionOrder.WX_TRANSACTION_ID,
+                    type=TransactionOrder.TYPE_ADDTIP,
+                    amount=request_args["amount"],
+                    commission=0,
+                    state=TransactionOrder.STATE_UNFINISH,
+                    description="待支付"
+                )
+                session.add(transactionorder)
+
+            # 调用微信支付API
+            if config.get("debug"):
+                prepay_id = random_string()
+            else:
+                # 调用统一下单API
+                unifiedorder_args = dict(
+                    appid=config.get("appid"),
+                    mch_id=config.get("mch_id"),
+                    nonce_str=transactionorder.transaction_id,
+                    body="add tip",
+                    out_trade_no=transactionorder.transaction_id,
+                    total_fee=Decimal(str(request_args["amount"])) * Decimal("100"),
+                    spbill_create_ip=self.request.remote_ip,
+                    notify_url="https://{hostname}:{port}/api/order/actions/addtip/{transaction_id}".format(
+                        hostname=config.get("https_domain_name"),
+                        port=config.get("https_listen_port"),
+                        transaction_id=transactionorder.id),
+                    trade_type="JSAPI"
+                )
+                unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
+                if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    raise PlException("调用微信统一下单接口失败:%s" % unifiedorder_ret["return_msg"])
+
+                if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    raise PlException("调用微信统一下单接口出错 err_code:%s err_code_des:%s " % (
+                        unifiedorder_ret["err_code"], unifiedorder_ret["err_code_des"]))
+
+                prepay_id = unifiedorder_ret["prepay_id"]
+
+            # 生成签名
+            data = dict()
+            data["appid"] = config.get("appid")
+            data["timeStamp"] = str(int(time.time()))
+            data["nonceStr"] = transactionorder.transaction_id
+            data["package"] = "prepay_id=%s" % prepay_id
+            data["signType"] = "MD5"
+            data["paySign"] = wx_sign(data)
+            data["id"] = transactionorder.id
+
+            self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
+        except Exception as e:
+            self.response_server_error(e)
+
+
+class CancleHandler(BasicHandler):
+    def post(self):
+        try:
+            necessary_list = ["user_id", "order_id"]
+            request_args = self.request_args(necessary_list=necessary_list)
+            user_id = request_args["user_id"]
+            order_id = request_args["order_id"]
+
+            with open_session() as session:
+                # 参数校验
+                user = session.query(User).filter(User.id == user_id).one_or_none()
+                if not user:
+                    raise PlException("此用户不存在")
+                order = session.query(Order).filter(Order.id == order_id).one_or_none()
+                if not order:
+                    raise ParameterInvalidException("此订单不存在")
+
+                if user_id == order.master_id:
+                    if order.state >= Order.STATE_DISTRIBUTION:
+                        raise ParameterInvalidException("雇主无法取消此订单")
+                elif order.slave_id and user_id == order.slave_id:
+                    if order.state != Order.STATE_ORDERS:
+                        raise ParameterInvalidException("佣兵无法取消此订单")
+                else:
+                    raise PlException("无效的用户id")
+
+                # 取消订单
+                order.state = Order.STATE_CANCEL
+                if "description" in request_args:
+                    order.description = request_args["description"]
+                # 订单金额和小费退至个人账户
+                account = session.query(Account).filter(Account.id == user.account_id).one()
+                account.amount += order.amount + order.tip
+
+                # 生成交易数据
+                transactionorder = TransactionOrder(
+                    order_id=order_id,
+                    user_id=user_id,
+                    transaction_id=random_string(),
+                    wx_transaction_id=TransactionOrder.WX_TRANSACTION_ID,
+                    type=TransactionOrder.TYPE_CANCEL,
+                    amount=order.amount + order.tip,
+                    commission=0,
+                    state=TransactionOrder.STATE_FINISH,
+                    description="订单已取消，退款至个人账户"
+                )
+                session.add(transactionorder)
+
+            self.response()
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
+        except Exception as e:
+            self.response_server_error(e)
+
+
+class AcceptHandler(BasicHandler):
+    @gen.coroutine
+    def post(self):
+        try:
+            necessary_list = ["order_id", "amount"]
+            request_args = self.request_args(necessary_list=necessary_list)
+
+            with open_session() as session:
+                # 参数校验
+                order = session.query(Order).filter(Order.id == request_args["order_id"]).one_or_none()
+                if not order:
+                    raise ParameterInvalidException("此订单不存在")
+                if order.state not in [Order.STATE_NOORDER, Order.STATE_ORDERS, Order.STATE_DISTRIBUTION]:
+                    raise PlException("此订单状态无法增加小费")
+
+                # 生成交易数据
+                transactionorder = TransactionOrder(
+                    order_id=order.id,
+                    user_id=order.master_id,
+                    transaction_id=random_string(),
+                    wx_transaction_id=TransactionOrder.WX_TRANSACTION_ID,
+                    type=TransactionOrder.TYPE_ADDTIP,
+                    amount=request_args["amount"],
+                    commission=0,
+                    state=TransactionOrder.STATE_UNFINISH,
+                    description="待支付"
+                )
+                session.add(transactionorder)
+
+            # 调用微信支付API
+            if config.get("debug"):
+                prepay_id = random_string()
+            else:
+                # 调用统一下单API
+                unifiedorder_args = dict(
+                    appid=config.get("appid"),
+                    mch_id=config.get("mch_id"),
+                    nonce_str=transactionorder.transaction_id,
+                    body="add tip",
+                    out_trade_no=transactionorder.transaction_id,
+                    total_fee=Decimal(str(request_args["amount"])) * Decimal("100"),
+                    spbill_create_ip=self.request.remote_ip,
+                    notify_url="https://{hostname}:{port}/api/order/actions/addtip/{transaction_id}".format(
+                        hostname=config.get("https_domain_name"),
+                        port=config.get("https_listen_port"),
+                        transaction_id=transactionorder.id),
+                    trade_type="JSAPI"
+                )
+                unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
+                if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    raise PlException("调用微信统一下单接口失败:%s" % unifiedorder_ret["return_msg"])
+
+                if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    raise PlException("调用微信统一下单接口出错 err_code:%s err_code_des:%s " % (
+                        unifiedorder_ret["err_code"], unifiedorder_ret["err_code_des"]))
+
+                prepay_id = unifiedorder_ret["prepay_id"]
+
+            # 生成签名
+            data = dict()
+            data["appid"] = config.get("appid")
+            data["timeStamp"] = str(int(time.time()))
+            data["nonceStr"] = transactionorder.transaction_id
+            data["package"] = "prepay_id=%s" % prepay_id
+            data["signType"] = "MD5"
+            data["paySign"] = wx_sign(data)
+            data["id"] = transactionorder.id
+
+            self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
+        except Exception as e:
+            self.response_server_error(e)
+
+
+class ArriveHandler(BasicHandler):
+    @gen.coroutine
+    def post(self):
+        try:
+            necessary_list = ["order_id", "amount"]
+            request_args = self.request_args(necessary_list=necessary_list)
+
+            with open_session() as session:
+                # 参数校验
+                order = session.query(Order).filter(Order.id == request_args["order_id"]).one_or_none()
+                if not order:
+                    raise ParameterInvalidException("此订单不存在")
+                if order.state not in [Order.STATE_NOORDER, Order.STATE_ORDERS, Order.STATE_DISTRIBUTION]:
+                    raise PlException("此订单状态无法增加小费")
+
+                # 生成交易数据
+                transactionorder = TransactionOrder(
+                    order_id=order.id,
+                    user_id=order.master_id,
+                    transaction_id=random_string(),
+                    wx_transaction_id=TransactionOrder.WX_TRANSACTION_ID,
+                    type=TransactionOrder.TYPE_ADDTIP,
+                    amount=request_args["amount"],
+                    commission=0,
+                    state=TransactionOrder.STATE_UNFINISH,
+                    description="待支付"
+                )
+                session.add(transactionorder)
+
+            # 调用微信支付API
+            if config.get("debug"):
+                prepay_id = random_string()
+            else:
+                # 调用统一下单API
+                unifiedorder_args = dict(
+                    appid=config.get("appid"),
+                    mch_id=config.get("mch_id"),
+                    nonce_str=transactionorder.transaction_id,
+                    body="add tip",
+                    out_trade_no=transactionorder.transaction_id,
+                    total_fee=Decimal(str(request_args["amount"])) * Decimal("100"),
+                    spbill_create_ip=self.request.remote_ip,
+                    notify_url="https://{hostname}:{port}/api/order/actions/addtip/{transaction_id}".format(
+                        hostname=config.get("https_domain_name"),
+                        port=config.get("https_listen_port"),
+                        transaction_id=transactionorder.id),
+                    trade_type="JSAPI"
+                )
+                unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
+                if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    raise PlException("调用微信统一下单接口失败:%s" % unifiedorder_ret["return_msg"])
+
+                if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    raise PlException("调用微信统一下单接口出错 err_code:%s err_code_des:%s " % (
+                        unifiedorder_ret["err_code"], unifiedorder_ret["err_code_des"]))
+
+                prepay_id = unifiedorder_ret["prepay_id"]
+
+            # 生成签名
+            data = dict()
+            data["appid"] = config.get("appid")
+            data["timeStamp"] = str(int(time.time()))
+            data["nonceStr"] = transactionorder.transaction_id
+            data["package"] = "prepay_id=%s" % prepay_id
+            data["signType"] = "MD5"
+            data["paySign"] = wx_sign(data)
+            data["id"] = transactionorder.id
+
+            self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
+        except Exception as e:
+            self.response_server_error(e)
+
+
+class FinishHandler(BasicHandler):
     @gen.coroutine
     def post(self):
         try:

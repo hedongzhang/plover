@@ -47,6 +47,14 @@ handlers:
   handler: handles.order.AddtipHandler
 - url: /api/order/actions/calculate
   handler: handles.order.CalculateHandler
+- url: /api/order/actions/cancle
+  handler: handles.order.CancleHandler
+- url: /api/order/actions/accept
+  handler: handles.order.AcceptHandler
+- url: /api/order/actions/arrive
+  handler: handles.order.ArriveHandler
+- url: /api/order/actions/finish
+  handler: handles.order.FinishHandler
 
 # 微信支付回调API
 - url: /api/user/account/actions/deposit/(\d+)$
