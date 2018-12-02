@@ -15,14 +15,13 @@ from decimal import Decimal
 from datetime import datetime
 
 from tornado import gen
-from sqlalchemy import and_, or_
 
 from conf import config
 from handles.base import BasicHandler, CallbackHandler, executor
 from handles.base import CALLBACK_RESPONSE_SUCCESS_CODE
 from handles.wx_api import unifiedorder, wx_sign
 from model.base import open_session
-from model.schema import Config, Order, Takeaway, TransactionOrder, Address
+from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User
 from utiles.exception import ParameterInvalidException, PlException
 from utiles.random_tool import random_string
 
@@ -31,38 +30,59 @@ class OrderHandler(BasicHandler):
     def get(self):
         try:
             session_id = self.get_argument("session_id")
-            user_id = self.get_argument("user_id")
+            order_id = self.get_argument("order_id")
 
             with open_session() as session:
-                user = session.query(User).filter(User.id == user_id).one()
-                account = session.query(Account).filter(Account.id == user.account_id).one()
+                order = session.query(Order).filter(Order.id == order_id).one_or_none()
+                if not order:
+                    raise PlException("此订单不存在")
 
-                undone_order_count = session.query(Order).filter(
-                    and_(
-                        or_(
-                            Order.slave_id == user.id,
-                            Order.master_id == user.id,
-                        ),
-                        Order.state != Order.STATE_FINISH,
-                        Order.state != Order.STATE_CANCEL
-                    )
-                ).count()
+                master_user = session.query(User).filter(User.id == order.master_id).one()
+                slave_user = session.query(User).filter(User.id == order.slave_id).one_or_none()
 
-                unread_message_count = session.query(Message).filter(Message.user_id == user.id,
-                                                                     Message.state == Message.STATE_UNREAD).count()
+                takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+                tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
+                recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
 
                 data = dict()
-                data["id"] = user.id
-                data["nick_name"] = user.nick_name
-                data["first_name"] = user.first_name
-                data["last_name"] = user.last_name
-                data["phone"] = user.phone
-                data["state"] = user.state
-                data["undone_order_count"] = undone_order_count
-                data["unread_message_count"] = unread_message_count
-                data["amount"] = account.amount.__str__()
+                data["state"] = order.state
+                data["amount"] = order.amount.__str__()
+                data["tip"] = order.tip.__str__()
+                data["verification_code"] = order.verification_code
 
-            self.response(data)
+                data["create_time"] = order.create_time.strftime("%Y-%m-%d %H:%M:%S")
+                data["order_time"] = order.order_time.strftime("%Y-%m-%d %H:%M:%S")
+                data["distribution_time"] = order.distribution_time.strftime("%Y-%m-%d %H:%M:%S")
+                data["finish_time"] = order.finish_time.strftime("%Y-%m-%d %H:%M:%S")
+                data["description"] = order.description
+
+                data["master_info"] = dict(
+                    user_id=master_user.id,
+                    nick_name=master_user.nick_name
+                )
+                if slave_user:
+                    data["slave_info"] = dict(
+                        user_id=slave_user.id,
+                        first_name=slave_user.first_name,
+                        last_name=slave_user.last_name,
+                        phone=slave_user.phone
+                    )
+                data["tack_address"] = dict(
+                    first_address=tack_address.first_address,
+                    last_address=tack_address.last_address,
+                    shop_name=tack_address.shop_name
+                )
+                data["recive_address"] = dict(
+                    first_address=recive_address.first_address,
+                    last_address=recive_address.last_address,
+                    phone=recive_address.phone
+                )
+                data["takeaway_info"] = dict(
+                    id=takeaway.id,
+                    state=takeaway.state
+                )
+
+                self.response(data)
         except ParameterInvalidException as e:
             self.response_request_error(e)
         except Exception as e:

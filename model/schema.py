@@ -178,9 +178,9 @@ class Order(Entity):
     tip = Column(DECIMAL(10, 2), nullable=False, default=0, doc="小费")
     verification_code = Column(String(length=64), nullable=False, doc="验证码")
     state = Column(Integer, nullable=False, doc="状态: 0-未支付，1-未接单，2-已接单，3-配送中，4-已送达, 5-完成, 6-已取消")
-    order_time = Column(DateTime, doc="接单时间utc")
-    distribution_time = Column(DateTime, doc="配送时间utc")
-    finish_time = Column(DateTime, doc="完成时间utc")
+    order_time = Column(DateTime, default=datetime.now, doc="接单时间utc")
+    distribution_time = Column(DateTime, default=datetime.now, doc="配送时间utc")
+    finish_time = Column(DateTime, default=datetime.now, doc="完成时间utc")
 
     description = Column(String(length=256), doc="备注")
     create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
