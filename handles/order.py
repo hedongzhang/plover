@@ -26,6 +26,22 @@ from model.schema import Config, Order, Takeaway, TransactionOrder, Address, Use
 from utiles.exception import ParameterInvalidException, PlException
 from utiles.random_tool import random_string
 
+# 存放所有未接单订单位置信息，用来加速推荐订单
+UNORDERS = dict()
+
+
+def init():
+    global UNORDERS
+    with open_session() as session:
+        orders = session.query(Order).filter(Order.state == Order.STATE_NOORDER).all()
+        for order in orders:
+            takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+            tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
+            UNORDERS[order.id] = (tack_address.latitude, tack_address.longitude)
+
+
+init()
+
 
 class OrderHandler(BasicHandler):
     def get(self):
@@ -236,7 +252,7 @@ class OrdersHandler(BasicHandler):
                 query = query.limit(limit)
                 query = query.offset(offset)
 
-                data = list()
+                data["order_list"] = list()
                 for order in query.all():
                     takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
                     tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
@@ -267,7 +283,7 @@ class OrdersHandler(BasicHandler):
                         phone=recive_address.phone
                     )
 
-                    data.append(order_info)
+                    data["order_list"].append(order_info)
 
             self.response(data)
         except ParameterInvalidException as e:
@@ -286,6 +302,65 @@ class CalculateHandler(BasicHandler):
                 amount_per_order = session.query(Config).filter(Config.key == "amount_per_order").one()
                 amount = Decimal(amount_per_order.value) * Decimal(count)
                 data = dict(amount=float(amount))
+
+            self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
+        except Exception as e:
+            self.response_server_error(e)
+
+
+class SuggestHandler(BasicHandler):
+    def get(self):
+        try:
+            session_id = self.get_argument("session_id")
+            longitude = float(self.get_argument("longitude"))
+            latitude = float(self.get_argument("latitude"))
+            limit = int(self.get_argument("limit"))
+            offset = int(self.get_argument("offset"))
+
+            data = dict()
+            data["count"] = len(UNORDERS)
+            data["order_list"] = list()
+
+            temp_orders = {k: ((longitude - v[0]) ** 2) + ((latitude - v[1]) ** 2) for k, v in UNORDERS.items()}
+            sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
+            sort_orders = sort_orders[offset:offset + limit]
+
+            with open_session() as session:
+                for sort_order in sort_orders:
+                    order = session.query(Order).filter(Order.id == sort_order[0]).one_or_none()
+                    if order:
+                        order_info = dict()
+                        order_info["id"] = order.id
+                        order_info["state"] = order.state
+                        order_info["amount"] = order.amount.__str__()
+                        order_info["tip"] = order.tip.__str__()
+                        order_info["master_id"] = order.master_id
+                        order_info["slave_id"] = order.slave_id
+
+                        order_info["create_time"] = order.create_time.strftime("%Y-%m-%d %H:%M:%S")
+                        order_info["order_time"] = order.order_time.strftime("%Y-%m-%d %H:%M:%S")
+                        order_info["distribution_time"] = order.distribution_time.strftime("%Y-%m-%d %H:%M:%S")
+                        order_info["finish_time"] = order.finish_time.strftime("%Y-%m-%d %H:%M:%S")
+                        order_info["description"] = order.description
+
+                        takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+                        tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
+                        recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
+
+                        order_info["tack_address"] = dict(
+                            first_address=tack_address.first_address,
+                            last_address=tack_address.last_address,
+                            shop_name=tack_address.shop_name
+                        )
+                        order_info["recive_address"] = dict(
+                            first_address=recive_address.first_address,
+                            last_address=recive_address.last_address,
+                            phone=recive_address.phone
+                        )
+
+                        data["order_list"].append(order_info)
 
             self.response(data)
         except ParameterInvalidException as e:
@@ -333,6 +408,10 @@ class OrderCallbackHandler(CallbackHandler):
                 # 更新订单状态
                 order = session.query(Order).filter(Order.id == transaction.order_id).one()
                 order.state = Order.STATE_NOORDER
+                # 加入待接单列表
+                takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+                tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
+                UNORDERS[order.id] = (tack_address.latitude, tack_address.longitude)
 
             self.response()
         except ParameterInvalidException as e:

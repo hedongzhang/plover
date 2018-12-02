@@ -41,6 +41,8 @@ handlers:
   handler: handles.order.OrderHandler
 - url: /api/orders
   handler: handles.order.OrdersHandler
+- url: /api/orders/actions/suggest
+  handler: handles.order.SuggestHandler
 - url: /api/order/actions/calculate
   handler: handles.order.CalculateHandler
 
