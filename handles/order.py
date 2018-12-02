@@ -15,6 +15,7 @@ from decimal import Decimal
 from datetime import datetime
 
 from tornado import gen
+from sqlalchemy import or_
 
 from conf import config
 from handles.base import BasicHandler, CallbackHandler, executor
@@ -210,6 +211,71 @@ class OrderHandler(BasicHandler):
             self.response_server_error(e)
 
 
+class OrdersHandler(BasicHandler):
+    def get(self):
+        try:
+            session_id = self.get_argument("session_id")
+            user_id = self.get_argument("user_id")
+            state = self.get_argument("state")
+            limit = self.get_argument("limit")
+            offset = self.get_argument("offset")
+
+            data = dict()
+
+            with open_session() as session:
+                query = session.query(Order)
+                query = query.filter(or_(
+                    Order.slave_id == user_id,
+                    Order.master_id == user_id,
+                ))
+
+                if state:
+                    query = query.filter(Order.state == state)
+
+                data["count"] = query.count()
+                query = query.limit(limit)
+                query = query.offset(offset)
+
+                data = list()
+                for order in query.all():
+                    takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+                    tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
+                    recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
+
+                    order_info = dict()
+                    order_info["id"] = order.id
+                    order_info["state"] = order.state
+                    order_info["amount"] = order.amount.__str__()
+                    order_info["tip"] = order.tip.__str__()
+                    order_info["master_id"] = order.master_id
+                    order_info["slave_id"] = order.slave_id
+
+                    order_info["create_time"] = order.create_time.strftime("%Y-%m-%d %H:%M:%S")
+                    order_info["order_time"] = order.order_time.strftime("%Y-%m-%d %H:%M:%S")
+                    order_info["distribution_time"] = order.distribution_time.strftime("%Y-%m-%d %H:%M:%S")
+                    order_info["finish_time"] = order.finish_time.strftime("%Y-%m-%d %H:%M:%S")
+                    order_info["description"] = order.description
+
+                    order_info["tack_address"] = dict(
+                        first_address=tack_address.first_address,
+                        last_address=tack_address.last_address,
+                        shop_name=tack_address.shop_name
+                    )
+                    order_info["recive_address"] = dict(
+                        first_address=recive_address.first_address,
+                        last_address=recive_address.last_address,
+                        phone=recive_address.phone
+                    )
+
+                    data.append(order_info)
+
+            self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
+        except Exception as e:
+            self.response_server_error(e)
+
+
 class CalculateHandler(BasicHandler):
     def get(self):
         try:
@@ -265,7 +331,7 @@ class OrderCallbackHandler(CallbackHandler):
                 transaction.state = TransactionOrder.STATE_FINISH
                 transaction.description = "支付成功"
                 # 更新订单状态
-                order = session.query(Order).filter(TransactionOrder.order_id == transaction.order_id).one()
+                order = session.query(Order).filter(Order.id == transaction.order_id).one()
                 order.state = Order.STATE_NOORDER
 
             self.response()

@@ -39,6 +39,8 @@ handlers:
   handler: handles.config.ConfigHandler
 - url: /api/order
   handler: handles.order.OrderHandler
+- url: /api/orders
+  handler: handles.order.OrdersHandler
 - url: /api/order/actions/calculate
   handler: handles.order.CalculateHandler
 
