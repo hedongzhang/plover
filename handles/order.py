@@ -25,6 +25,8 @@ from model.base import open_session
 from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User, Account
 from utiles.exception import ParameterInvalidException, PlException
 from utiles.random_tool import random_string
+from utiles.sms import send_message
+from utiles import logger
 
 # 存放所有未接单订单位置信息，用来加速推荐订单
 UNORDERS = dict()
@@ -524,9 +526,11 @@ class AcceptHandler(BasicHandler):
                 # 接单
                 order.slave_id = user_id
                 order.state = Order.STATE_ORDERS
+                order.order_time = datetime.now()
                 takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
                 if takeaway.state == Takeaway.STATE_ARRIVE:
                     order.state = Order.STATE_DISTRIBUTION
+                    order.distribution_time = datetime.now()
 
             self.response()
         except ParameterInvalidException as e:
@@ -536,74 +540,41 @@ class AcceptHandler(BasicHandler):
 
 
 class ArriveHandler(BasicHandler):
-    @gen.coroutine
     def post(self):
         try:
-            necessary_list = ["order_id", "amount"]
+            necessary_list = ["user_id", "order_id"]
             request_args = self.request_args(necessary_list=necessary_list)
+            user_id = request_args["user_id"]
+            order_id = request_args["order_id"]
 
             with open_session() as session:
                 # 参数校验
-                order = session.query(Order).filter(Order.id == request_args["order_id"]).one_or_none()
+                user = session.query(User).filter(User.id == user_id).one_or_none()
+                if not user:
+                    raise PlException("此用户不存在")
+                order = session.query(Order).filter(Order.id == order_id).one_or_none()
                 if not order:
                     raise ParameterInvalidException("此订单不存在")
-                if order.state not in [Order.STATE_NOORDER, Order.STATE_ORDERS, Order.STATE_DISTRIBUTION]:
-                    raise PlException("此订单状态无法增加小费")
 
-                # 生成交易数据
-                transactionorder = TransactionOrder(
-                    order_id=order.id,
-                    user_id=order.master_id,
-                    transaction_id=random_string(),
-                    wx_transaction_id=TransactionOrder.WX_TRANSACTION_ID,
-                    type=TransactionOrder.TYPE_ADDTIP,
-                    amount=request_args["amount"],
-                    commission=0,
-                    state=TransactionOrder.STATE_UNFINISH,
-                    description="待支付"
-                )
-                session.add(transactionorder)
+                if user_id != order.master_id:
+                    raise PlException("用户无法操作不属于自己的订单")
 
-            # 调用微信支付API
-            if config.get("debug"):
-                prepay_id = random_string()
-            else:
-                # 调用统一下单API
-                unifiedorder_args = dict(
-                    appid=config.get("appid"),
-                    mch_id=config.get("mch_id"),
-                    nonce_str=transactionorder.transaction_id,
-                    body="add tip",
-                    out_trade_no=transactionorder.transaction_id,
-                    total_fee=Decimal(str(request_args["amount"])) * Decimal("100"),
-                    spbill_create_ip=self.request.remote_ip,
-                    notify_url="https://{hostname}:{port}/api/order/actions/addtip/{transaction_id}".format(
-                        hostname=config.get("https_domain_name"),
-                        port=config.get("https_listen_port"),
-                        transaction_id=transactionorder.id),
-                    trade_type="JSAPI"
-                )
-                unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
-                if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
-                    raise PlException("调用微信统一下单接口失败:%s" % unifiedorder_ret["return_msg"])
+                # 到达
+                takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+                takeaway.state = Takeaway.STATE_ARRIVE
 
-                if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
-                    raise PlException("调用微信统一下单接口出错 err_code:%s err_code_des:%s " % (
-                        unifiedorder_ret["err_code"], unifiedorder_ret["err_code_des"]))
+                if order.state == Order.STATE_ORDERS:
+                    order.state = Order.STATE_DISTRIBUTION
+                    order.distribution_time = datetime.now()
 
-                prepay_id = unifiedorder_ret["prepay_id"]
+                    # 调用短信接口，发送短信通知
+                    try:
+                        user = session.query(User).filter(User.id == order.slave_id).one()
+                        send_message(self.session_id, user.phone)
+                    except Exception as e:
+                        logger.warn("send sms failed! :%s" % e)
 
-            # 生成签名
-            data = dict()
-            data["appid"] = config.get("appid")
-            data["timeStamp"] = str(int(time.time()))
-            data["nonceStr"] = transactionorder.transaction_id
-            data["package"] = "prepay_id=%s" % prepay_id
-            data["signType"] = "MD5"
-            data["paySign"] = wx_sign(data)
-            data["id"] = transactionorder.id
-
-            self.response(data)
+            self.response()
         except ParameterInvalidException as e:
             self.response_request_error(e)
         except Exception as e:
