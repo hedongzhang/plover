@@ -202,7 +202,7 @@ class DepositCallbackHandler(CallbackHandler):
                 account.deposit += transaction.amount
                 # 更新用户状态
                 user = session.query(User).filter(User.id == transaction.user_id).one()
-                user.state += User.STATE_CERTIFICATION
+                user.state = User.STATE_CERTIFICATION
                 user.description = "已认证"
 
             self.response()
