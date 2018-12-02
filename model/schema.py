@@ -214,8 +214,9 @@ class TransactionOrder(Entity):
     __tablename__ = "transaction_order"
 
     TYPE_ORDERS = 0
-    TYPE_COLLECT = 1
+    TYPE_ADDTIP = 1
     TYPE_CANCEL = 2
+    TYPE_COLLECT = 3
 
     WX_TRANSACTION_ID = 0
 
@@ -228,7 +229,7 @@ class TransactionOrder(Entity):
     order_id = Column(Integer, nullable=False, doc="订单id")
     transaction_id = Column(String(length=128), nullable=False, doc="交易id")
     wx_transaction_id = Column(String(length=64), nullable=False, doc="微信交易id, 0-未实际发生微信交易")
-    type = Column(Integer, nullable=False, doc="0-雇主下单，1-佣兵收款，2-雇主取消订单")
+    type = Column(Integer, nullable=False, doc="0-雇主下单, 1-雇主增加小费, 2-雇主取消订单, 3-佣兵收款")
     state = Column(Integer, nullable=False, doc="交易状态，0-未完成，1-已完成, 2-交易失败, 3-交易异常")
     amount = Column(DECIMAL(10, 2), nullable=False, doc="交易金额")
     commission = Column(DECIMAL(10, 2), nullable=False, doc="平台佣金")

@@ -168,7 +168,7 @@ class OrderHandler(BasicHandler):
                     nonce_str=transactionorder.transaction_id,
                     body="order",
                     out_trade_no=transactionorder.transaction_id,
-                    total_fee=order.amount,
+                    total_fee=order.amount * 100,
                     spbill_create_ip=self.request.remote_ip,
                     notify_url="https://{hostname}:{port}/api/order/{transaction_id}".format(
                         hostname=config.get("https_domain_name"),
@@ -369,6 +369,81 @@ class SuggestHandler(BasicHandler):
             self.response_server_error(e)
 
 
+class AddtipHandler(BasicHandler):
+    @gen.coroutine
+    def post(self):
+        try:
+            necessary_list = ["order_id", "amount"]
+            request_args = self.request_args(necessary_list=necessary_list)
+
+            with open_session() as session:
+                # 参数校验
+                order = session.query(Order).filter(Order.id == request_args["order_id"]).one_or_none()
+                if not order:
+                    raise ParameterInvalidException("此订单不存在")
+                if order.state not in [Order.STATE_NOORDER, Order.STATE_ORDERS, Order.STATE_DISTRIBUTION]:
+                    raise PlException("此订单状态无法增加小费")
+
+                # 生成交易数据
+                transactionorder = TransactionOrder(
+                    order_id=order.id,
+                    user_id=order.master_id,
+                    transaction_id=random_string(),
+                    wx_transaction_id=TransactionOrder.WX_TRANSACTION_ID,
+                    type=TransactionOrder.TYPE_ADDTIP,
+                    amount=request_args["amount"],
+                    commission=0,
+                    state=TransactionOrder.STATE_UNFINISH,
+                    description="待支付"
+                )
+                session.add(transactionorder)
+
+            # 调用微信支付API
+            if config.get("debug"):
+                prepay_id = random_string()
+            else:
+                # 调用统一下单API
+                unifiedorder_args = dict(
+                    appid=config.get("appid"),
+                    mch_id=config.get("mch_id"),
+                    nonce_str=transactionorder.transaction_id,
+                    body="add tip",
+                    out_trade_no=transactionorder.transaction_id,
+                    total_fee=request_args["amount"] * 100,
+                    spbill_create_ip=self.request.remote_ip,
+                    notify_url="https://{hostname}:{port}/api/order/actions/addtip/{transaction_id}".format(
+                        hostname=config.get("https_domain_name"),
+                        port=config.get("https_listen_port"),
+                        transaction_id=transactionorder.id),
+                    trade_type="JSAPI"
+                )
+                unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
+                if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    raise PlException("调用微信统一下单接口失败:%s" % unifiedorder_ret["return_msg"])
+
+                if unifiedorder_ret["result_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    raise PlException("调用微信统一下单接口出错 err_code:%s err_code_des:%s " % (
+                        unifiedorder_ret["err_code"], unifiedorder_ret["err_code_des"]))
+
+                prepay_id = unifiedorder_ret["prepay_id"]
+
+            # 生成签名
+            data = dict()
+            data["appid"] = config.get("appid")
+            data["timeStamp"] = str(int(time.time()))
+            data["nonceStr"] = transactionorder.transaction_id
+            data["package"] = "prepay_id=%s" % prepay_id
+            data["signType"] = "MD5"
+            data["paySign"] = wx_sign(data)
+            data["id"] = transactionorder.id
+
+            self.response(data)
+        except ParameterInvalidException as e:
+            self.response_request_error(e)
+        except Exception as e:
+            self.response_server_error(e)
+
+
 class OrderCallbackHandler(CallbackHandler):
     def post(self, transaction_id):
         try:
@@ -398,7 +473,7 @@ class OrderCallbackHandler(CallbackHandler):
                     raise PlException("校验签名失败")
 
                 # 验证交易金额
-                if Decimal(request_args["total_fee"]) != transaction["amount"]:
+                if Decimal(request_args["total_fee"]) != transaction["amount"] * 100:
                     raise PlException("支付金额不对应")
 
                 # 交易成功，更新交易状态
@@ -412,6 +487,56 @@ class OrderCallbackHandler(CallbackHandler):
                 takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
                 tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
                 UNORDERS[order.id] = (tack_address.latitude, tack_address.longitude)
+
+            self.response()
+        except ParameterInvalidException as e:
+            self.response_error("参数格式校验错误:%s" % e)
+        except Exception as e:
+            self.response_error(e)
+
+
+class AddtipCallbackHandler(CallbackHandler):
+    def post(self, transaction_id):
+        try:
+            necessary_list = ["return_code", "return_msg"]
+            request_args = self.request_args(necessary_list=necessary_list)
+
+            with open_session() as session:
+                transaction = session.query(TransactionOrder).filter(
+                    TransactionOrder.id == transaction_id).one_or_none()
+                if not transaction:
+                    raise PlException("查询不到此订单ID")
+
+                if transaction.type != TransactionOrder.TYPE_ADDTIP:
+                    raise PlException("无效的订单ID")
+
+                if transaction.state == TransactionOrder.STATE_FINISH:
+                    self.response()
+                    return
+
+                if request_args["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    transaction.wx_transaction_id = request_args["transaction_id"]
+                    transaction.state = TransactionOrder.STATE_FAILED
+                    transaction.description = "支付失败:%s" % request_args["return_msg"]
+                    self.response()
+                    return
+
+                # 校验签名
+                sign = request_args.pop("sign")
+                if sign != wx_sign(request_args):
+                    raise PlException("校验签名失败")
+
+                # 验证交易金额
+                if Decimal(request_args["total_fee"]) != transaction["amount"] * 100:
+                    raise PlException("支付金额不对应")
+
+                # 交易成功，更新交易状态
+                transaction.wx_transaction_id = request_args["transaction_id"]
+                transaction.state = TransactionOrder.STATE_FINISH
+                transaction.description = "支付成功"
+                # 更新订单状态
+                order = session.query(Order).filter(Order.id == transaction.order_id).one()
+                order.tip += transaction["amount"]
 
             self.response()
         except ParameterInvalidException as e:
