@@ -15,7 +15,8 @@ from datetime import datetime, timedelta
 from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Verification
-from utiles import random_tool, sms_ali
+from utiles import random_tool
+import utiles.sms_xa as sms
 from utiles.exception import ParameterInvalidException, PlException
 
 
@@ -40,7 +41,7 @@ class VerificationHandler(BasicHandler):
                     session.add(verification)
 
                 # 调用短信接口，发送短信
-                sms_ali.send_verification_code(session_id, phone, verification_code)
+                sms.send_verification_code(session_id, phone, verification_code)
 
                 data = dict()
                 data["id"] = verification.id

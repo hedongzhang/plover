@@ -19,15 +19,24 @@ uid = "81347"
 code = "ynwl"
 password = "OPrh5F4"
 
+url = "http://sms.10690221.com:9011/hy/"
 
-def send_sms(business_id, phone_numbers, sign_name, template_code, template_param=None):
 
+def send_sms(phone_numbers, message):
     auth_str = "{code}{password}".format(code=code, password=password)
     m = hashlib.md5()
     m.update(auth_str.encode())
-    args_str2 = m.hexdigest()
+    auth = m.hexdigest()
 
-    httpclient.post()
+    args = dict(
+        uid=uid,
+        auth=auth,
+        mobile=phone_numbers,
+        msg=message,
+        expid=0,
+        encode="utf-8"
+    )
+    httpclient.get(url, args)
 
     retry_count = 2
     while retry_count:
@@ -43,25 +52,12 @@ def send_sms(business_id, phone_numbers, sign_name, template_code, template_para
 
 
 def send_verification_code(business_id, phone_numbers, code):
-    # 短信签名
-    sign_name = "HDZhangTest"
-    # 短信模板
-    template_code = "SMS_151178627"
-    # 模板参数
-    template_param = '{"code":"%s"}' % code
-
-    return send_sms(business_id, phone_numbers, sign_name, template_code, template_param=template_param)
+    message = "您的验证码：%s，您正进行身份验证，打死不告诉别人！" % code
+    send_sms(phone_numbers, message)
 
 
-def send_message(business_id, phone_numbers):
-    # 短信签名
-    sign_name = "HDZhangTest"
-    # 短信模板
-    template_code = "SMS_151178627"
-    # 模板参数
-    template_param = '{"code":"%s"}' % "tack"
-
-    return send_sms(business_id, phone_numbers, sign_name, template_code, template_param=template_param)
+def send_message(business_id, phone_numbers, message):
+    send_sms(phone_numbers, message)
 
 
 if __name__ == '__main__':

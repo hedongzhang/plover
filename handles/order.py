@@ -25,7 +25,7 @@ from model.base import open_session
 from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User, Account
 from utiles.exception import ParameterInvalidException, PlException
 from utiles.random_tool import random_string, random_digits
-from utiles.sms_ali import send_message
+import utiles.sms_xa as sms
 from utiles import logger
 
 # 存放所有未接单订单位置信息，用来加速推荐订单
@@ -583,7 +583,7 @@ class ArriveHandler(BasicHandler):
                     # 调用短信接口，发送短信通知
                     try:
                         user = session.query(User).filter(User.id == order.slave_id).one()
-                        send_message(self.session_id, user.phone)
+                        sms.send_message(self.session_id, user.phone, "您的订单已到达取货点，请及时领取！")
                     except Exception as e:
                         logger.warn("send sms failed! :%s" % e)
 

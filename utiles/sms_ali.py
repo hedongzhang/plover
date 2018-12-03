@@ -83,16 +83,6 @@ def send_verification_code(business_id, phone_numbers, code):
     return send_sms(business_id, phone_numbers, sign_name, template_code, template_param=template_param)
 
 
-def send_message(business_id, phone_numbers):
-    # 短信签名
-    sign_name = "HDZhangTest"
-    # 短信模板
-    template_code = "SMS_151178627"
-    # 模板参数
-    template_param = '{"code":"%s"}' % "tack"
-
-    return send_sms(business_id, phone_numbers, sign_name, template_code, template_param=template_param)
-
 if __name__ == '__main__':
     session_id = "dscdscdscdscsdwefregret"
     print(send_verification_code(session_id, "17316923416", "qnmlgb"))
