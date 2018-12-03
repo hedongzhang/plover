@@ -10,10 +10,8 @@ Description:
 
 """
 
-import json
 import hashlib
-
-from utiles import httpclient
+from tornado import httpclient
 
 uid = "81347"
 code = "ynwl"
@@ -23,6 +21,7 @@ url = "http://sms.10690221.com:9011/hy/"
 
 
 def send_sms(phone_numbers, message):
+    global url
     auth_str = "{code}{password}".format(code=code, password=password)
     m = hashlib.md5()
     m.update(auth_str.encode())
@@ -36,19 +35,24 @@ def send_sms(phone_numbers, message):
         expid=0,
         encode="utf-8"
     )
-    httpclient.get(url, args)
 
-    retry_count = 2
-    while retry_count:
-        sms_response = acs_client.do_action_with_exception(sms_request)
-        response = json.loads(sms_response)
+    http_client = httpclient.HTTPClient()
+    try:
 
-        if response["Code"] == "OK":
-            return response
-        else:
-            retry_count -= 1
+        args_str = "&".join(["{key}={value}".format(key=k, value=v) for k, v in args.items()])
+        url += "?" + args_str
+        http_request = httpclient.HTTPRequest(url=url, method="GET", request_timeout=60)
+        response = http_client.fetch(http_request)
 
-    raise Exception("短信接口调用异常, 错误码:{code}".format(code=response["Code"]))
+        ret = response.body
+        ret_code, ret_message = ret.decode('utf-8').split(",")
+        if int(ret_code) != 0:
+            raise Exception("错误码:%s, 错误信息:%s" % (ret_code, ret_message))
+
+    except Exception as e:
+        raise Exception("调用短信接口失败:%s" % e)
+    finally:
+        http_client.close()
 
 
 def send_verification_code(business_id, phone_numbers, code):

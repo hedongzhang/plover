@@ -11,8 +11,9 @@ Description:
 """
 
 from datetime import datetime, timedelta
+from tornado import gen
 
-from handles.base import BasicHandler
+from handles.base import BasicHandler, executor
 from model.base import open_session
 from model.schema import Verification
 from utiles import random_tool
@@ -21,6 +22,7 @@ from utiles.exception import ParameterInvalidException, PlException
 
 
 class VerificationHandler(BasicHandler):
+    @gen.coroutine
     def get(self):
         try:
             session_id = self.get_argument("session_id")
@@ -41,7 +43,8 @@ class VerificationHandler(BasicHandler):
                     session.add(verification)
 
                 # 调用短信接口，发送短信
-                sms.send_verification_code(session_id, phone, verification_code)
+                yield executor.submit(sms.send_verification_code, business_id=session_id, phone_numbers=phone,
+                                      code=verification_code)
 
                 data = dict()
                 data["id"] = verification.id
