@@ -39,7 +39,7 @@ def unifiedorder(args):
 def wx_sign(args_dict):
     key_list = sorted([key for key in args_dict.keys()])
     args_list = ["%s=%s" % (key, args_dict[key]) for key in key_list if args_dict[key]]
-    args_list.append("key=%s" % config.get("api_key"))
+    args_list.append("key=%s" % config.get("pay_key"))
     args_str1 = "&".join(args_list)
 
     m = hashlib.md5()

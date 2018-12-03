@@ -11,38 +11,23 @@ Description:
 """
 
 import json
+import hashlib
+
+from utiles import httpclient
+
+uid = "81347"
+code = "ynwl"
+password = "OPrh5F4"
 
 
 def send_sms(business_id, phone_numbers, sign_name, template_code, template_param=None):
-    sms_request = SendSmsRequest.SendSmsRequest()
-    # 申请的短信模板编码,必填
-    sms_request.set_TemplateCode(template_code)
 
-    # 短信模板变量参数
-    if template_param is not None:
-        sms_request.set_TemplateParam(template_param)
+    auth_str = "{code}{password}".format(code=code, password=password)
+    m = hashlib.md5()
+    m.update(auth_str.encode())
+    args_str2 = m.hexdigest()
 
-    # 设置业务请求流水号，必填。
-    sms_request.set_OutId(business_id)
-
-    # 短信签名
-    sms_request.set_SignName(sign_name)
-
-    # 数据提交方式
-    # sms_request.set_method(MT.POST)
-
-    # 数据提交格式
-    # sms_request.set_accept_format(FT.JSON)
-
-    # 短信发送的号码列表，必填。
-    sms_request.set_PhoneNumbers(phone_numbers)
-
-    # 调用短信发送接口，返回json
-    sms_response = acs_client.do_action_with_exception(sms_request)
-    response = json.loads(sms_response)
-
-    if response["Code"] == "OK":
-        return response
+    httpclient.post()
 
     retry_count = 2
     while retry_count:
@@ -77,6 +62,7 @@ def send_message(business_id, phone_numbers):
     template_param = '{"code":"%s"}' % "tack"
 
     return send_sms(business_id, phone_numbers, sign_name, template_code, template_param=template_param)
+
 
 if __name__ == '__main__':
     session_id = "dscdscdscdscsdwefregret"
