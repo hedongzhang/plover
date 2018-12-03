@@ -13,7 +13,7 @@ Description:
 from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Message
-from utiles.exception import ParameterInvalidException
+from utiles.exception import ParameterInvalidException, PlException
 
 
 class MessageHandler(BasicHandler):
@@ -66,8 +66,11 @@ class MessagesHandler(BasicHandler):
             session_id = self.get_argument("session_id")
             user_id = self.get_argument("user_id")
             type = self.get_argument("type")
+
             limit = self.get_argument("limit")
             offset = self.get_argument("offset")
+            if (limit == "") or (offset == ""):
+                raise PlException("分页参数不能为空值")
 
             data = dict()
 

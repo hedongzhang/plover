@@ -13,7 +13,7 @@ Description:
 from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Address
-from utiles.exception import ParameterInvalidException
+from utiles.exception import ParameterInvalidException, PlException
 
 
 properties = ["user_id", "type", "property", "shop_name", "first_name", "last_name", "phone",
@@ -172,8 +172,11 @@ class AddressesHandler(BasicHandler):
             type = self.get_argument("type")
             property = self.get_argument("property")
             default = self.get_argument("default")
+
             limit = self.get_argument("limit")
             offset = self.get_argument("offset")
+            if (limit == "") or (offset == ""):
+                raise PlException("分页参数不能为空值")
 
             data = dict()
 

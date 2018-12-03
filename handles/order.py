@@ -25,7 +25,7 @@ from model.base import open_session
 from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User, Account
 from utiles.exception import ParameterInvalidException, PlException
 from utiles.random_tool import random_string
-from utiles.sms import send_message
+from utiles.sms_ali import send_message
 from utiles import logger
 
 # 存放所有未接单订单位置信息，用来加速推荐订单
@@ -235,8 +235,11 @@ class OrdersHandler(BasicHandler):
             session_id = self.get_argument("session_id")
             user_id = self.get_argument("user_id")
             state = self.get_argument("state")
+
             limit = self.get_argument("limit")
             offset = self.get_argument("offset")
+            if (limit == "") or (offset == ""):
+                raise PlException("分页参数不能为空值")
 
             data = dict()
 
@@ -318,16 +321,22 @@ class SuggestHandler(BasicHandler):
             session_id = self.get_argument("session_id")
             longitude = float(self.get_argument("longitude"))
             latitude = float(self.get_argument("latitude"))
+
             limit = int(self.get_argument("limit"))
             offset = int(self.get_argument("offset"))
+            if (limit == "") or (offset == ""):
+                raise PlException("分页参数不能为空值")
 
             data = dict()
             data["count"] = len(UNORDERS)
             data["order_list"] = list()
 
-            temp_orders = {k: ((longitude - v[0]) ** 2) + ((latitude - v[1]) ** 2) for k, v in UNORDERS.items()}
-            sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
-            sort_orders = sort_orders[offset:offset + limit]
+            if latitude and longitude:
+                temp_orders = {k: ((longitude - v[0]) ** 2) + ((latitude - v[1]) ** 2) for k, v in UNORDERS.items()}
+                sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
+                sort_orders = sort_orders[offset:offset + limit]
+            else:
+                sort_orders = [(k, v) for k, v in UNORDERS.items()]
 
             with open_session() as session:
                 for sort_order in sort_orders:
@@ -494,6 +503,8 @@ class CancleHandler(BasicHandler):
                 )
                 session.add(transactionorder)
 
+                UNORDERS.pop(order.id)
+
             self.response()
         except ParameterInvalidException as e:
             self.response_request_error(e)
@@ -531,6 +542,8 @@ class AcceptHandler(BasicHandler):
                 if takeaway.state == Takeaway.STATE_ARRIVE:
                     order.state = Order.STATE_DISTRIBUTION
                     order.distribution_time = datetime.now()
+
+                UNORDERS.pop(order.id)
 
             self.response()
         except ParameterInvalidException as e:

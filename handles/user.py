@@ -112,8 +112,11 @@ class UsersHandler(BasicHandler):
             session_id = self.get_argument("session_id")
             state = self.get_argument("state")
             status = self.get_argument("status")
+
             limit = self.get_argument("limit")
             offset = self.get_argument("offset")
+            if (limit == "") or (offset == ""):
+                raise PlException("分页参数不能为空值")
 
             data = dict()
 
