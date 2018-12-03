@@ -24,7 +24,7 @@ from handles.wx_api import unifiedorder, wx_sign
 from model.base import open_session
 from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User, Account
 from utiles.exception import ParameterInvalidException, PlException
-from utiles.random_tool import random_string
+from utiles.random_tool import random_string, random_digits
 from utiles.sms_ali import send_message
 from utiles import logger
 
@@ -139,7 +139,7 @@ class OrderHandler(BasicHandler):
                     master_id=request_args["master_id"],
                     takeaway_id=takeaway.id,
                     amount=request_args["amount"],
-                    verification_code=random_string(4).lower(),
+                    verification_code=random_digits(4),
                     state=Order.STATE_UNPAID,
                     description=request_args["description"]
                 )
