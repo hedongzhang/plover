@@ -17,7 +17,7 @@ uid = "81347"
 code = "ynwl"
 password = "OPrh5F4"
 
-url = "http://sms.10690221.com:9011/hy/"
+base_url = "http://sms.10690221.com:9011/hy/"
 
 
 def send_sms(phone_numbers, message):
@@ -40,14 +40,14 @@ def send_sms(phone_numbers, message):
     try:
 
         args_str = "&".join(["{key}={value}".format(key=k, value=v) for k, v in args.items()])
-        url += "?" + args_str
+        url = base_url + "?" + args_str
         http_request = httpclient.HTTPRequest(url=url, method="GET", request_timeout=60)
         response = http_client.fetch(http_request)
 
         ret = response.body.decode('utf-8').split(",")
         if int(ret[0]) != 0:
             raise Exception("错误码:%s, 错误信息:%s" % (ret[0], ret[1] if len(ret) > 1 else ""))
-
+        return ret
     except Exception as e:
         raise Exception("调用短信接口失败:%s" % e)
     finally:
