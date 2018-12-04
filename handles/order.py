@@ -319,8 +319,8 @@ class SuggestHandler(BasicHandler):
     def get(self):
         try:
             session_id = self.get_argument("session_id")
-            longitude = float(self.get_argument("longitude"))
-            latitude = float(self.get_argument("latitude"))
+            longitude = self.get_argument("longitude")
+            latitude = self.get_argument("latitude")
 
             limit = int(self.get_argument("limit"))
             offset = int(self.get_argument("offset"))
@@ -332,7 +332,8 @@ class SuggestHandler(BasicHandler):
             data["order_list"] = list()
 
             if latitude and longitude:
-                temp_orders = {k: ((longitude - v[0]) ** 2) + ((latitude - v[1]) ** 2) for k, v in UNORDERS.items()}
+                temp_orders = {k: ((float(longitude) - v[0]) ** 2) + ((float(latitude) - v[1]) ** 2) for k, v in
+                               UNORDERS.items()}
                 sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
                 sort_orders = sort_orders[offset:offset + limit]
             else:
