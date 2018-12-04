@@ -43,8 +43,8 @@ class VerificationHandler(BasicHandler):
                     session.add(verification)
 
                 # 调用短信接口，发送短信
-                yield executor.submit(sms.send_verification_code, business_id=session_id, phone_numbers=phone,
-                                      code=verification_code)
+                _ = yield executor.submit(sms.send_verification_code, business_id=session_id, phone_numbers=phone,
+                                          code=verification_code)
 
                 data = dict()
                 data["id"] = verification.id

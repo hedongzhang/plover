@@ -24,7 +24,7 @@ from sqlalchemy.schema import MetaData
 from conf import config
 
 engine = create_engine(config.get("engine_str"), poolclass=NullPool,
-                       connect_args={"use_unicode": True, "charset": "utf8"}, echo=True)
+                       connect_args={"use_unicode": True, "charset": "utf8"})
 
 
 class ModelMixin(object):

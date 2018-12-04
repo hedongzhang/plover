@@ -44,10 +44,9 @@ def send_sms(phone_numbers, message):
         http_request = httpclient.HTTPRequest(url=url, method="GET", request_timeout=60)
         response = http_client.fetch(http_request)
 
-        ret = response.body
-        ret_code, ret_message = ret.decode('utf-8').split(",")
-        if int(ret_code) != 0:
-            raise Exception("错误码:%s, 错误信息:%s" % (ret_code, ret_message))
+        ret = response.body.decode('utf-8').split(",")
+        if int(ret[0]) != 0:
+            raise Exception("错误码:%s, 错误信息:%s" % (ret[0], ret[1] if len(ret) > 1 else ""))
 
     except Exception as e:
         raise Exception("调用短信接口失败:%s" % e)
