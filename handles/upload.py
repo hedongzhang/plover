@@ -15,6 +15,7 @@ import os
 from conf import config
 from handles.base import BasicHandler
 from utiles.exception import PlException, ParameterInvalidException
+from utiles import logger
 
 
 class UploadHandler(BasicHandler):
@@ -53,8 +54,10 @@ class UploadHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 

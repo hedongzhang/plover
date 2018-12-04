@@ -16,7 +16,7 @@ from tornado import gen
 from handles.base import BasicHandler, executor
 from model.base import open_session
 from model.schema import Verification
-from utiles import random_tool
+from utiles import random_tool, logger
 import utiles.sms_xa as sms
 from utiles.exception import ParameterInvalidException, PlException
 
@@ -53,6 +53,8 @@ class VerificationHandler(BasicHandler):
 
                 self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)

@@ -14,6 +14,7 @@ from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Message
 from utiles.exception import ParameterInvalidException, PlException
+from utiles import logger
 
 
 class MessageHandler(BasicHandler):
@@ -33,8 +34,10 @@ class MessageHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
     def post(self):
@@ -55,8 +58,10 @@ class MessageHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -97,6 +102,8 @@ class MessagesHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)

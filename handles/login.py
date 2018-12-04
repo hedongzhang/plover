@@ -16,7 +16,7 @@ from conf import config
 from handles.base import executor, BasicHandler
 from model.base import open_session
 from model.schema import User, Account, Session
-from utiles import httpclient, random_tool
+from utiles import httpclient, random_tool,logger
 from utiles.exception import ParameterInvalidException
 from handles.wx_api import code2session
 
@@ -30,20 +30,23 @@ class LoginHandler(BasicHandler):
             request_context["grant_type"] = "authorization_code"
 
             if config.get("debug"):
+
                 code2session_response = dict(errcode=0, openid=random_tool.random_int(1024 * 1024 * 1024),
                                              session_key=random_tool.random_string(),
                                              unionid=random_tool.random_int(1024 * 1024 * 1024))
             else:
                 code2session_response = yield executor.submit(code2session, args=request_context)
 
-            if code2session_response["errcode"] == 0:
+            if "errcode" not in code2session_response:
                 self.user_login(code2session_response)
             else:
                 self.response_server_error("微信API服务访问失败({errcode}:{errmsg})".format(**code2session_response))
 
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
     def user_login(self, code2session_response):
@@ -51,7 +54,7 @@ class LoginHandler(BasicHandler):
 
         openid = code2session_response["openid"]
         session_key = code2session_response["session_key"]
-        unionid = code2session_response["unionid"]
+        unionid = code2session_response["unionid"] if "unionid" in code2session_response else ""
 
         with open_session() as session:
             user = session.query(User).filter(User.openid == openid).one_or_none()

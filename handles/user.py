@@ -18,6 +18,7 @@ from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import User, Account, Order, Message, Verification
 from utiles.exception import ParameterInvalidException, PlException
+from utiles import logger
 
 
 class UserHandler(BasicHandler):
@@ -57,8 +58,10 @@ class UserHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
     def post(self):
@@ -77,8 +80,10 @@ class UserHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
     def put(self):
@@ -101,8 +106,10 @@ class UserHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -144,6 +151,8 @@ class UsersHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)

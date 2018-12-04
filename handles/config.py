@@ -13,6 +13,7 @@ Description:
 from handles.base import BasicHandler
 from model.base import open_session
 from model.schema import Config
+from utiles import logger
 
 
 class ConfigHandler(BasicHandler):
@@ -40,4 +41,5 @@ class ConfigHandler(BasicHandler):
 
             self.response()
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)

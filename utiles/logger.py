@@ -84,4 +84,4 @@ def fatal(msg):
 
 
 def exception(msg="exception"):
-    logging.exception(msg)
+    logger.exception(msg)

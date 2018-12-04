@@ -22,7 +22,7 @@ from handles.base import BasicHandler, CallbackHandler, executor
 from handles.base import CALLBACK_RESPONSE_SUCCESS_CODE
 from handles.wx_api import unifiedorder, wx_sign
 from model.base import open_session
-from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User, Account
+from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User, Account, Verification
 from utiles.exception import ParameterInvalidException, PlException
 from utiles.random_tool import random_string, random_digits
 import utiles.sms_xa as sms
@@ -34,6 +34,7 @@ UNORDERS = dict()
 
 def init():
     global UNORDERS
+    UNORDERS = dict()
     with open_session() as session:
         orders = session.query(Order).filter(Order.state == Order.STATE_NOORDER).all()
         for order in orders:
@@ -103,8 +104,10 @@ class OrderHandler(BasicHandler):
 
                 self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
     @gen.coroutine
@@ -200,8 +203,10 @@ class OrderHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
     def put(self):
@@ -224,8 +229,10 @@ class OrderHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -292,8 +299,10 @@ class OrdersHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -310,8 +319,10 @@ class CalculateHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -328,6 +339,7 @@ class SuggestHandler(BasicHandler):
                 raise PlException("分页参数不能为空值")
 
             data = dict()
+            init()
             data["count"] = len(UNORDERS)
             data["order_list"] = list()
 
@@ -376,8 +388,10 @@ class SuggestHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -451,8 +465,10 @@ class AddtipHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -508,8 +524,10 @@ class CancleHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -548,8 +566,10 @@ class AcceptHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -590,8 +610,10 @@ class ArriveHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -646,8 +668,10 @@ class FinishHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -697,8 +721,10 @@ class OrderCallbackHandler(CallbackHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_error("参数格式校验错误:%s" % e)
         except Exception as e:
+            logger.exception()
             self.response_error(e)
 
 
@@ -747,6 +773,8 @@ class AddtipCallbackHandler(CallbackHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_error("参数格式校验错误:%s" % e)
         except Exception as e:
+            logger.exception()
             self.response_error(e)

@@ -21,7 +21,7 @@ from handles.wx_api import unifiedorder, wx_sign
 from model.base import open_session
 from model.schema import TransactionOrder, TransactionNonOrder, Account, User
 from utiles.exception import ParameterInvalidException, PlException
-from utiles import random_tool
+from utiles import random_tool,logger
 from conf import config
 
 
@@ -69,8 +69,10 @@ class AccountHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
     def post(self):
@@ -89,8 +91,10 @@ class AccountHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -156,8 +160,10 @@ class DepositHandler(BasicHandler):
 
             self.response(data)
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -207,8 +213,10 @@ class DepositCallbackHandler(CallbackHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_error("参数格式校验错误:%s" % e)
         except Exception as e:
+            logger.exception()
             self.response_error(e)
 
 
@@ -238,8 +246,10 @@ class RedemptionHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
 
 
@@ -280,6 +290,8 @@ class WithdrawHandler(BasicHandler):
 
             self.response()
         except ParameterInvalidException as e:
+            logger.exception()
             self.response_request_error(e)
         except Exception as e:
+            logger.exception()
             self.response_server_error(e)
