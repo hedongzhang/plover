@@ -103,12 +103,14 @@ class Address(Entity):
 
     PROPERTY_FEMALE = 0
     PROPERTY_MALE = 1
-    PROPERTY_PUBLIC = 2
+    PROPERTY_LIBRARY = 2
+    PROPERTY_TEACH_BUILDING = 3
+    PROPERTY_OTHER = 4
 
     user_id = Column(Integer, nullable=False, doc="用户id")
     shop_name = Column(String(length=64), doc="商家名称")
     type = Column(Integer, nullable=False, default=0, doc="类型: 0-取货地址, 1-收货地址")
-    property = Column(Integer, nullable=False, doc="属性: 0-女性场所, 1-男性场所, 2-公共场所")
+    property = Column(Integer, nullable=False, doc="属性: 0-女生宿舍，1-男生宿舍，2-图书馆，3-教学楼，4-其他")
     first_name = Column(String(length=64), doc="名")
     last_name = Column(String(length=64), doc="姓")
     phone = Column(String(length=16), doc="手机号")

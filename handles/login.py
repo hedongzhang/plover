@@ -16,7 +16,7 @@ from conf import config
 from handles.base import executor, BasicHandler
 from model.base import open_session
 from model.schema import User, Account, Session
-from utiles import httpclient, random_tool,logger
+from utiles import httpclient, random_tool, logger
 from utiles.exception import ParameterInvalidException
 from handles.wx_api import code2session
 
@@ -31,7 +31,7 @@ class LoginHandler(BasicHandler):
 
             if config.get("debug"):
 
-                code2session_response = dict(errcode=0, openid=random_tool.random_int(1024 * 1024 * 1024),
+                code2session_response = dict(openid=random_tool.random_int(1024 * 1024 * 1024),
                                              session_key=random_tool.random_string(),
                                              unionid=random_tool.random_int(1024 * 1024 * 1024))
             else:
@@ -40,7 +40,10 @@ class LoginHandler(BasicHandler):
             if "errcode" not in code2session_response:
                 self.user_login(code2session_response)
             else:
-                self.response_server_error("微信API服务访问失败({errcode}:{errmsg})".format(**code2session_response))
+                errcode = code2session_response.get("errcode")
+                errmsg = code2session_response.get("errmsg")
+                self.response_server_error(
+                    "微信API服务访问失败 (errcode:{errcode}) (errmsg:{errmsg})".format(errmsg=errmsg, errcode=errcode))
 
         except ParameterInvalidException as e:
             logger.exception()
