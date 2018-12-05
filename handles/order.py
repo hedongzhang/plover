@@ -32,20 +32,6 @@ from utiles import logger
 UNORDERS = dict()
 
 
-def init():
-    global UNORDERS
-    UNORDERS = dict()
-    with open_session() as session:
-        orders = session.query(Order).filter(Order.state == Order.STATE_NOORDER).all()
-        for order in orders:
-            takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
-            tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
-            UNORDERS[order.id] = (tack_address.latitude, tack_address.longitude)
-
-
-init()
-
-
 class OrderHandler(BasicHandler):
     def get(self):
         try:
@@ -330,6 +316,7 @@ class SuggestHandler(BasicHandler):
     def get(self):
         try:
             session_id = self.get_argument("session_id")
+            user_id = self.get_argument("user_id")
             longitude = self.get_argument("longitude")
             latitude = self.get_argument("latitude")
 
@@ -339,17 +326,33 @@ class SuggestHandler(BasicHandler):
                 raise PlException("分页参数不能为空值")
 
             data = dict()
-            init()
-            data["count"] = len(UNORDERS)
+
+            unorders = dict()
+            with open_session() as session:
+                user = session.query(User).filter(User.id == user_id).one_or_none()
+                if not user:
+                    raise PlException("此用户不存在")
+
+                orders = session.query(Order).filter(Order.state == Order.STATE_NOORDER).all()
+                for order in orders:
+                    takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+                    address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
+
+                    if user.gender == User.GENDER_MALE and address.property != Address.PROPERTY_FEMALE:
+                        unorders[order.id] = (address.latitude, address.longitude)
+                    elif user.gender == User.GENDER_FEMALE and address.property != Address.PROPERTY_MALE:
+                        unorders[order.id] = (address.latitude, address.longitude)
+
+            data["count"] = len(unorders)
             data["order_list"] = list()
 
             if latitude and longitude:
                 temp_orders = {k: ((float(longitude) - v[0]) ** 2) + ((float(latitude) - v[1]) ** 2) for k, v in
-                               UNORDERS.items()}
+                               unorders.items()}
                 sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
                 sort_orders = sort_orders[offset:offset + limit]
             else:
-                sort_orders = [(k, v) for k, v in UNORDERS.items()]
+                sort_orders = [(k, v) for k, v in unorders.items()]
 
             with open_session() as session:
                 for sort_order in sort_orders:
