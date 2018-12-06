@@ -55,6 +55,7 @@ if __name__ == "__main__":
         mch_id="10000100",
         device_info="1000",
         body="test",
-        nonce_str="ibuaiVcKdpRxkhJA"
+        nonce_str="ibuaiVcKdpRxkhJA",
+        url="https://hdzhang.xyz:443/api/order/10"
     )
     print(wx_sign(args_dict))

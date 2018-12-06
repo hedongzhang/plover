@@ -54,6 +54,7 @@ class OrderHandler(BasicHandler):
                 data["state"] = order.state
                 data["amount"] = order.amount.__str__()
                 data["tip"] = order.tip.__str__()
+                data["total_amount"] = (order.tip + order.amount).__str__()
                 data["verification_code"] = order.verification_code
 
                 data["create_time"] = order.create_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -153,6 +154,11 @@ class OrderHandler(BasicHandler):
                 prepay_id = random_string()
             else:
                 # 调用统一下单API
+                callback_url = "https://{hostname}:{port}/api/order/{transaction_id}".format(
+                    hostname=config.get("https_domain_name"),
+                    port=config.get("https_listen_port"),
+                    transaction_id=transactionorder.id)
+
                 unifiedorder_args = dict(
                     appid=config.get("appid"),
                     mch_id=config.get("mch_id"),
@@ -161,10 +167,7 @@ class OrderHandler(BasicHandler):
                     out_trade_no=transactionorder.transaction_id,
                     total_fee=Decimal(str(order.amount)) * Decimal("100"),
                     spbill_create_ip=self.request.remote_ip,
-                    notify_url="https://{hostname}:{port}/api/order/{transaction_id}".format(
-                        hostname=config.get("https_domain_name"),
-                        port=config.get("https_listen_port"),
-                        transaction_id=transactionorder.id),
+                    # notify_url="<![CDATA[%s]]>" % callback_url,
                     trade_type="JSAPI"
                 )
                 unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
@@ -261,6 +264,7 @@ class OrdersHandler(BasicHandler):
                     order_info["state"] = order.state
                     order_info["amount"] = order.amount.__str__()
                     order_info["tip"] = order.tip.__str__()
+                    order_info["total_amount"] = (order.tip + order.amount).__str__()
                     order_info["master_id"] = order.master_id
                     order_info["slave_id"] = order.slave_id
 
@@ -363,6 +367,7 @@ class SuggestHandler(BasicHandler):
                         order_info["state"] = order.state
                         order_info["amount"] = order.amount.__str__()
                         order_info["tip"] = order.tip.__str__()
+                        order_info["total_amount"] = (order.tip + order.amount).__str__()
                         order_info["master_id"] = order.master_id
                         order_info["slave_id"] = order.slave_id
 
