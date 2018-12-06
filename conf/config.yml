@@ -27,7 +27,7 @@ upload_path: "/storage/upload"
 #########
 appid: "wx002b7e790dfa4a25"
 mch_id: "1519730751"
-pay_key: "hangzhouyounahuanliawangkeji12345"
+pay_key: "Gao123456789aaaa987654312ggwwwww"
 
 code2session_url: "https://api.weixin.qq.com/sns/jscode2session"
 unifiedorder_url: "https://api.mch.weixin.qq.com/pay/unifiedorder"
@@ -42,5 +42,5 @@ query_num: 10
 #########
 # DEBUG #
 #########
-debug: true
-#debug: false
+#debug: true
+debug: false

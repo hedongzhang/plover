@@ -112,6 +112,9 @@ class OrderHandler(BasicHandler):
                 address = session.query(Address).filter(Address.id == request_args["recive_address_id"]).one_or_none()
                 if not address:
                     raise ParameterInvalidException("送货地址不存在")
+                user = session.query(User).filter(User.id == request_args["master_id"]).one_or_none()
+                if not user:
+                    raise ParameterInvalidException("用户不存在")
 
                 # 生成外卖数据
                 takeaway = Takeaway(
@@ -158,6 +161,7 @@ class OrderHandler(BasicHandler):
                     hostname=config.get("https_domain_name"),
                     port=config.get("https_listen_port"),
                     transaction_id=transactionorder.id)
+                total_fee = (Decimal(str(order.amount)) * Decimal("100")).quantize(Decimal('0'))
 
                 unifiedorder_args = dict(
                     appid=config.get("appid"),
@@ -165,10 +169,11 @@ class OrderHandler(BasicHandler):
                     nonce_str=transactionorder.transaction_id,
                     body="order",
                     out_trade_no=transactionorder.transaction_id,
-                    total_fee=Decimal(str(order.amount)) * Decimal("100"),
+                    total_fee=total_fee.__str__(),
                     spbill_create_ip=self.request.remote_ip,
-                    # notify_url="<![CDATA[%s]]>" % callback_url,
-                    trade_type="JSAPI"
+                    notify_url="<![CDATA[%s]]>" % callback_url,
+                    trade_type="JSAPI",
+                    openid=user.openid
                 )
                 unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
                 if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
@@ -417,6 +422,9 @@ class AddtipHandler(BasicHandler):
                     raise ParameterInvalidException("此订单不存在")
                 if order.state not in [Order.STATE_NOORDER, Order.STATE_ORDERS, Order.STATE_DISTRIBUTION]:
                     raise PlException("此订单状态无法增加小费")
+                user = session.query(User).filter(User.id == order.master_id).one_or_none()
+                if not user:
+                    raise ParameterInvalidException("用户不存在")
 
                 # 生成交易数据
                 transactionorder = TransactionOrder(
@@ -437,19 +445,24 @@ class AddtipHandler(BasicHandler):
                 prepay_id = random_string()
             else:
                 # 调用统一下单API
+                callback_url = "https://{hostname}:{port}/api/order/{transaction_id}".format(
+                    hostname=config.get("https_domain_name"),
+                    port=config.get("https_listen_port"),
+                    transaction_id=transactionorder.id)
+
+                total_fee = (Decimal(str(request_args["amount"])) * Decimal("100")).quantize(Decimal('0'))
+
                 unifiedorder_args = dict(
                     appid=config.get("appid"),
                     mch_id=config.get("mch_id"),
                     nonce_str=transactionorder.transaction_id,
                     body="add tip",
                     out_trade_no=transactionorder.transaction_id,
-                    total_fee=Decimal(str(request_args["amount"])) * Decimal("100"),
+                    total_fee=total_fee.__str__(),
                     spbill_create_ip=self.request.remote_ip,
-                    notify_url="https://{hostname}:{port}/api/order/actions/addtip/{transaction_id}".format(
-                        hostname=config.get("https_domain_name"),
-                        port=config.get("https_listen_port"),
-                        transaction_id=transactionorder.id),
-                    trade_type="JSAPI"
+                    notify_url="<![CDATA[%s]]>" % callback_url,
+                    trade_type="JSAPI",
+                    openid=user.openid
                 )
                 unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
                 if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:

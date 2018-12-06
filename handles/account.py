@@ -105,6 +105,11 @@ class DepositHandler(BasicHandler):
             necessary_list = ["user_id", "amount"]
             request_args = self.request_args(necessary_list=necessary_list)
 
+            with open_session() as session:
+                user = session.query(User).filter(User.id == request_args["user_id"]).one_or_none()
+                if not user:
+                    raise ParameterInvalidException("用户不存在")
+
             transaction_id = random_tool.random_string()
 
             with open_session() as session:
@@ -124,19 +129,25 @@ class DepositHandler(BasicHandler):
                 prepay_id = "wx201411101639507cbf6ffd8b0779950874"
             else:
                 # 调用统一下单API
+                callback_url = "https://{hostname}:{port}/api/order/{transaction_id}".format(
+                    hostname=config.get("https_domain_name"),
+                    port=config.get("https_listen_port"),
+                    transaction_id=transaction.id)
+
+                total_fee = (Decimal(str(request_args["amount"])) * Decimal("100")).quantize(Decimal('0'))
+
                 unifiedorder_args = dict(
                     appid=config.get("appid"),
                     mch_id=config.get("mch_id"),
                     nonce_str=transaction_id,
                     body="deposit",
                     out_trade_no=transaction_id,
-                    total_fee=Decimal(str(request_args["amount"])) * Decimal("100"),
+                    total_fee=total_fee.__str__(),
                     spbill_create_ip=self.request.remote_ip,
-                    notify_url="https://{hostname}:{port}/api/user/account/actions/deposit/{transaction_id}".format(
-                        hostname=config.get("https_domain_name"),
-                        port=config.get("https_listen_port"),
-                        transaction_id=transaction.id),
-                    trade_type="JSAPI"
+                    notify_url="<![CDATA[%s]]>" % callback_url,
+                    trade_type="JSAPI",
+                    openid=user.openid
+
                 )
                 unifiedorder_ret = yield executor.submit(unifiedorder, args=unifiedorder_args)
                 if unifiedorder_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
