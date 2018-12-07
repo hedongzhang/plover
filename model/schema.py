@@ -35,7 +35,7 @@ class User(Entity):
     STATE_CERTIFICATION = 2
 
     openid = Column(String(length=64), nullable=False, unique=True, doc="微信用户的openid")
-    unionid = Column(String(length=64), nullable=False, unique=True, doc="微信用户的unionid")
+    unionid = Column(String(length=64), doc="微信用户的unionid")
     account_id = Column(Integer, nullable=False, unique=True, doc="账户id, -1表示刚刚注册，在创建账户时中断")
     nick_name = Column(String(length=64), doc="昵称")
     avatar_url = Column(String(length=256), doc="头像URL")

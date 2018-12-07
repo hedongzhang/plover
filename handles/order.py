@@ -80,6 +80,8 @@ class OrderHandler(BasicHandler):
                     shop_name=tack_address.shop_name
                 )
                 data["recive_address"] = dict(
+                    first_name=recive_address.first_name,
+                    last_name=recive_address.last_name,
                     first_address=recive_address.first_address,
                     last_address=recive_address.last_address,
                     phone=recive_address.phone
@@ -171,7 +173,7 @@ class OrderHandler(BasicHandler):
                     out_trade_no=transactionorder.transaction_id,
                     total_fee=total_fee.__str__(),
                     spbill_create_ip=self.request.remote_ip,
-                    notify_url="<![CDATA[%s]]>" % callback_url,
+                    notify_url=callback_url,
                     trade_type="JSAPI",
                     openid=user.openid
                 )
@@ -187,7 +189,7 @@ class OrderHandler(BasicHandler):
 
             # 生成签名
             data = dict()
-            data["appid"] = config.get("appid")
+            data["appId"] = config.get("appid")
             data["timeStamp"] = str(int(time.time()))
             data["nonceStr"] = transactionorder.transaction_id
             data["package"] = "prepay_id=%s" % prepay_id
@@ -460,7 +462,7 @@ class AddtipHandler(BasicHandler):
                     out_trade_no=transactionorder.transaction_id,
                     total_fee=total_fee.__str__(),
                     spbill_create_ip=self.request.remote_ip,
-                    notify_url="<![CDATA[%s]]>" % callback_url,
+                    notify_url=callback_url,
                     trade_type="JSAPI",
                     openid=user.openid
                 )
@@ -476,7 +478,7 @@ class AddtipHandler(BasicHandler):
 
             # 生成签名
             data = dict()
-            data["appid"] = config.get("appid")
+            data["appId"] = config.get("appid")
             data["timeStamp"] = str(int(time.time()))
             data["nonceStr"] = transactionorder.transaction_id
             data["package"] = "prepay_id=%s" % prepay_id
@@ -541,7 +543,7 @@ class CancleHandler(BasicHandler):
                 )
                 session.add(transactionorder)
 
-                UNORDERS.pop(order.id)
+                # UNORDERS.pop(order.id)
 
             self.response()
         except ParameterInvalidException as e:
@@ -583,7 +585,7 @@ class AcceptHandler(BasicHandler):
                     order.state = Order.STATE_DISTRIBUTION
                     order.distribution_time = datetime.now()
 
-                UNORDERS.pop(order.id)
+                # UNORDERS.pop(order.id)
 
             self.response()
         except ParameterInvalidException as e:
@@ -699,7 +701,7 @@ class FinishHandler(BasicHandler):
 class OrderCallbackHandler(CallbackHandler):
     def post(self, transaction_id):
         try:
-            necessary_list = ["return_code", "return_msg"]
+            necessary_list = ["return_code"]
             request_args = self.request_args(necessary_list=necessary_list)
 
             with open_session() as session:
@@ -715,7 +717,9 @@ class OrderCallbackHandler(CallbackHandler):
                 if request_args["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
                     transaction.wx_transaction_id = request_args["transaction_id"]
                     transaction.state = TransactionOrder.STATE_FAILED
-                    transaction.description = "支付失败:%s" % request_args["return_msg"]
+
+                    transaction.description = "支付失败:%s" % request_args[
+                        "return_msg"] if "return_msg" in request_args else ""
                     self.response()
                     return
 
@@ -738,7 +742,7 @@ class OrderCallbackHandler(CallbackHandler):
                 # 加入待接单列表
                 takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
                 tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
-                UNORDERS[order.id] = (tack_address.latitude, tack_address.longitude)
+                # UNORDERS[order.id] = (tack_address.latitude, tack_address.longitude)
 
             self.response()
         except ParameterInvalidException as e:

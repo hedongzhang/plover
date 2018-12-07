@@ -144,7 +144,7 @@ class DepositHandler(BasicHandler):
                     out_trade_no=transaction_id,
                     total_fee=total_fee.__str__(),
                     spbill_create_ip=self.request.remote_ip,
-                    notify_url="<![CDATA[%s]]>" % callback_url,
+                    notify_url=callback_url,
                     trade_type="JSAPI",
                     openid=user.openid
 
@@ -161,7 +161,7 @@ class DepositHandler(BasicHandler):
 
             # 生成签名
             data = dict()
-            data["appid"] = config.get("appid")
+            data["appId"] = config.get("appid")
             data["timeStamp"] = str(int(time.time()))
             data["nonceStr"] = transaction_id
             data["package"] = "prepay_id=%s" % prepay_id
