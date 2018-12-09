@@ -15,7 +15,7 @@ import os
 from conf import config
 from handles.base import BasicHandler
 from utiles.exception import PlException, ParameterInvalidException
-from utiles import logger
+from utiles import logger, random_tool
 
 
 class UploadHandler(BasicHandler):
@@ -46,7 +46,7 @@ class UploadHandler(BasicHandler):
                 filename_prefix = user_id + "-IDCard-"
                 upload_path = config.get("upload_identify_path")
             elif type == "1":
-                filename_prefix = user_id + "-Suggestion-"
+                filename_prefix = user_id + "-Suggestion-%s-" % random_tool.random_string(8)
                 upload_path = config.get("upload_suggestion_path")
             else:
                 raise PlException('上传文件错误, 无效的type参数')

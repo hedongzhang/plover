@@ -167,7 +167,7 @@ class Suggestion(Entity):
 
     user_id = Column(Integer, nullable=False, doc="用户id")
     context = Column(String(length=1024), doc="内容")
-    path = Column(String(length=256), unique=True, doc="截图路径")
+    path = Column(String(length=256), doc="截图路径")
     contact = Column(String(length=32), doc="联系方式")
 
     description = Column(String(length=256), doc="备注")
