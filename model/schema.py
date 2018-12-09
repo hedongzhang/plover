@@ -159,6 +159,22 @@ class Verification(Entity):
     update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
 
 
+class Suggestion(Entity):
+    """
+        用户账户表
+    """
+    __tablename__ = "suggestion"
+
+    user_id = Column(Integer, nullable=False, doc="用户id")
+    context = Column(String(length=1024), doc="内容")
+    path = Column(String(length=256), unique=True, doc="截图路径")
+    contact = Column(String(length=32), doc="联系方式")
+
+    description = Column(String(length=256), doc="备注")
+    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+
+
 class Order(Entity):
     """
         订单表

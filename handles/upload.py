@@ -34,17 +34,26 @@ class UploadHandler(BasicHandler):
 
     def post(self):
         try:
-            upload_path = config.get("upload_path")  # 文件的存放路径
             file_metas = self.request.files.get('file', None)
             session_id = self.get_argument("session_id")
             user_id = self.get_argument("user_id")
+            type = self.get_argument("type")
 
-            if not file_metas or not session_id or not user_id:
+            if not file_metas or not session_id or not user_id or not type:
                 raise PlException('上传文件错误, 无效的参数')
+
+            if type == "0":
+                filename_prefix = user_id + "-IDCard-"
+                upload_path = config.get("upload_identify_path")
+            elif type == "1":
+                filename_prefix = user_id + "-Suggestion-"
+                upload_path = config.get("upload_suggestion_path")
+            else:
+                raise PlException('上传文件错误, 无效的type参数')
 
             data = dict(path="")
             for meta in file_metas:
-                filename = user_id + "-IDCard-" + meta['filename']
+                filename = filename_prefix + meta['filename']
                 file_path = os.path.join(upload_path, filename)
 
                 with open(file_path, 'wb') as up:

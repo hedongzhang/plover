@@ -19,7 +19,8 @@ engine_str: "mysql+mysqlconnector://root:ploverpassword@localhost:3306/plover"
 ###########
 # STORAGE #
 ###########
-upload_path: "/storage/upload"
+upload_identify_path: "/storage/upload/identify"
+upload_suggestion_path: "/storage/upload/suggestion"
 
 
 #########

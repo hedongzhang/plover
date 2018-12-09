@@ -31,6 +31,8 @@ handlers:
   handler: handles.account.RedemptionHandler
 - url: /api/user/account/actions/withdraw
   handler: handles.account.WithdrawHandler
+- url: /api/user/actions/suggestion
+  handler: handles.user.SuggestionHandler
 - url: /api/verification
   handler: handles.verification.VerificationHandler
 - url: /api/upload

@@ -16,7 +16,7 @@ from sqlalchemy import and_, or_
 
 from handles.base import BasicHandler
 from model.base import open_session
-from model.schema import User, Account, Order, Message, Verification
+from model.schema import User, Account, Order, Message, Verification, Suggestion
 from utiles.exception import ParameterInvalidException, PlException
 from utiles import logger
 
@@ -150,6 +150,26 @@ class UsersHandler(BasicHandler):
                     data["user_list"].append(user_info)
 
             self.response(data)
+        except ParameterInvalidException as e:
+            logger.exception()
+            self.response_request_error(e)
+        except Exception as e:
+            logger.exception()
+            self.response_server_error(e)
+
+
+class SuggestionHandler(BasicHandler):
+    def post(self):
+        try:
+            necessary_list = ["user_id", "context", "path", "contact"]
+            request_args = self.request_args(necessary_list=necessary_list)
+
+            with open_session() as session:
+                suggestion = Suggestion(user_id=request_args["user_id"], context=request_args["context"],
+                                        path=request_args["path"], contact=request_args["contact"])
+                session.add(suggestion)
+
+            self.response()
         except ParameterInvalidException as e:
             logger.exception()
             self.response_request_error(e)
