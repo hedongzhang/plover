@@ -117,6 +117,7 @@ class OrderHandler(BasicHandler):
                 user = session.query(User).filter(User.id == request_args["master_id"]).one_or_none()
                 if not user:
                     raise ParameterInvalidException("用户不存在")
+                account = session.query(Account).filter(Account.id == user.account_id).one()
 
                 # 生成外卖数据
                 takeaway = Takeaway(
@@ -154,6 +155,16 @@ class OrderHandler(BasicHandler):
                 )
                 session.add(transactionorder)
 
+                if account.amount >= order.amount:
+                    account.amount -= Decimal(str(order.amount))
+                    order.state = Order.STATE_NOORDER
+                    transactionorder.state = TransactionOrder.STATE_FINISH
+                    data = dict()
+                    data["id"] = order.id
+                    data["payed"] = True
+                    self.response(data)
+                    return
+
             # 调用微信支付API
             if config.get("debug"):
                 prepay_id = random_string()
@@ -163,7 +174,7 @@ class OrderHandler(BasicHandler):
                     hostname=config.get("https_domain_name"),
                     port=config.get("https_listen_port"),
                     transaction_id=transactionorder.id)
-                total_fee = (Decimal(str(order.amount)) * Decimal("100")).quantize(Decimal('0'))
+                total_fee = ((Decimal(str(order.amount)) - account.amount) * Decimal("100")).quantize(Decimal('0'))
 
                 unifiedorder_args = dict(
                     appid=config.get("appid"),
@@ -196,6 +207,7 @@ class OrderHandler(BasicHandler):
             data["signType"] = "MD5"
             data["paySign"] = wx_sign(data)
             data["id"] = order.id
+            data["payed"] = False
 
             self.response(data)
         except ParameterInvalidException as e:
@@ -381,7 +393,8 @@ class SuggestHandler(BasicHandler):
                     order = session.query(Order).filter(Order.id == sort_order[0]).one_or_none()
                     if order:
                         draw_cratio = session.query(Config).filter(Config.key == "draw_cratio").one()
-                        commission = (order.amount * Decimal(str(draw_cratio.value))).quantize(Decimal('0.00'))
+                        commission = ((order.amount + order.tip) * Decimal(str(draw_cratio.value))).quantize(
+                            Decimal('0.00'))
 
                         takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
                         address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
@@ -750,9 +763,11 @@ class OrderCallbackHandler(CallbackHandler):
                 if sign != wx_sign(request_args):
                     raise PlException("校验签名失败")
 
-                # 验证交易金额
-                if Decimal(request_args["total_fee"]) != Decimal(str(transaction["amount"])) * Decimal("100"):
-                    raise PlException("支付金额不对应")
+                # 去除账户余额
+                user = session.query(User).filter(User.id == transaction.user_id).one()
+                account = session.query(Account).filter(Account.id == user.account_id).one()
+                temp_fee = transaction.amount - Decimal(request_args["total_fee"]).quantize(Decimal('0.00'))/Decimal("100")
+                account.amount -= temp_fee
 
                 # 交易成功，更新交易状态
                 transaction.wx_transaction_id = request_args["transaction_id"]
