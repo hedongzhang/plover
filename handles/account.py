@@ -67,8 +67,9 @@ class AccountHandler(BasicHandler):
                     transaction_info["commission"] = transaction.commission.__str__()
                     transaction_info["description"] = transaction.description
                     transaction_info["create_time"] = transaction.create_time.strftime("%Y-%m-%d %H:%M:%S")
-
-                    data["transaction_list"].append(transaction_info)
+                    # gyp要求
+                    if transaction_info["type"] in [TransactionOrder.TYPE_CANCEL, TransactionOrder.TYPE_COLLECT]:
+                        data["transaction_list"].append(transaction_info)
                 data["income"] = data["income"].__str__()
 
             self.response(data)

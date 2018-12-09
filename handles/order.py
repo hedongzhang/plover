@@ -236,7 +236,8 @@ class OrdersHandler(BasicHandler):
     def get(self):
         try:
             session_id = self.get_argument("session_id")
-            user_id = self.get_argument("user_id")
+            master_id = self.get_argument("master_id")
+            slave_id = self.get_argument("slave_id")
             state = self.get_argument("state")
 
             limit = self.get_argument("limit")
@@ -248,18 +249,20 @@ class OrdersHandler(BasicHandler):
 
             with open_session() as session:
                 query = session.query(Order)
-                query = query.filter(or_(
-                    Order.slave_id == user_id,
-                    Order.master_id == user_id,
-                ))
+
+                if not master_id and not slave_id:
+                    raise PlException("master_id和slave_id必须传一个")
+                if master_id:
+                    query = query.filter(Order.master_id == master_id)
+                if slave_id:
+                    query = query.filter(Order.slave_id == slave_id)
+                if state:
+                    query = query.filter(Order.state == state)
 
                 # 前端要求不显示未支付的订单
                 query = query.filter(Order.state != Order.STATE_UNPAID)
                 # 按时间倒序
                 query = query.order_by(Order.create_time.desc())
-
-                if state:
-                    query = query.filter(Order.state == state)
 
                 data["count"] = query.count()
                 query = query.limit(limit)
