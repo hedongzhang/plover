@@ -253,6 +253,11 @@ class OrdersHandler(BasicHandler):
                     Order.master_id == user_id,
                 ))
 
+                # 前端要求不显示未支付的订单
+                query = query.filter(Order.state != Order.STATE_UNPAID)
+                # 按时间倒序
+                query = query.order_by(Order.create_time.desc())
+
                 if state:
                     query = query.filter(Order.state == state)
 

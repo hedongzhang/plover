@@ -16,7 +16,6 @@ from model.schema import Address
 from utiles.exception import ParameterInvalidException, PlException
 from utiles import logger
 
-
 properties = ["user_id", "type", "property", "shop_name", "first_name", "last_name", "phone",
               "first_address", "last_address", "latitude", "longitude", "default"]
 
@@ -157,8 +156,8 @@ class AddressDefaultHandler(BasicHandler):
                         data["tack_address"][property] = default_tack_address.__getattribute__(property)
 
                 default_recive_address = session.query(Address).filter(Address.user_id == user_id,
-                                                                     Address.type == Address.TYPE_RECIVE,
-                                                                     Address.default == True).one_or_none()
+                                                                       Address.type == Address.TYPE_RECIVE,
+                                                                       Address.default == True).one_or_none()
 
                 if default_recive_address:
                     data["recive_address"] = dict(id=default_recive_address.id)
@@ -190,6 +189,7 @@ class AddressesHandler(BasicHandler):
                 raise PlException("分页参数不能为空值")
 
             data = dict()
+            data["address_list"] = list()
 
             with open_session() as session:
                 query = session.query(Address)
@@ -200,13 +200,18 @@ class AddressesHandler(BasicHandler):
                 if property:
                     query = query.filter(Address.property == property)
                 if default:
-                    query = query.filter(Address.default == default)
+                    if default.lower() == "true":
+                        query = query.filter(Address.default == True)
+                    else:
+                        query = query.filter(Address.default == False)
+
+                query = query.order_by(Address.default.desc())
+                query = query.order_by(Address.create_time.desc())
 
                 data["count"] = query.count()
                 query = query.limit(limit)
                 query = query.offset(offset)
 
-                data["address_list"] = list()
                 for address in query.all():
                     address_info = dict()
                     address_info["id"] = address.id
