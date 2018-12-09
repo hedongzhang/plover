@@ -26,7 +26,7 @@ from model.schema import Config, Order, Takeaway, TransactionOrder, Address, Use
 from utiles.exception import ParameterInvalidException, PlException
 from utiles.random_tool import random_string, random_digits
 import utiles.sms_xa as sms
-from utiles import logger
+from utiles import logger, map_tx
 
 # 存放所有未接单订单位置信息，用来加速推荐订单
 UNORDERS = dict()
@@ -332,6 +332,7 @@ class CalculateHandler(BasicHandler):
 
 
 class SuggestHandler(BasicHandler):
+    @gen.coroutine
     def get(self):
         try:
             session_id = self.get_argument("session_id")
@@ -355,7 +356,7 @@ class SuggestHandler(BasicHandler):
                 orders = session.query(Order).filter(Order.state == Order.STATE_NOORDER).all()
                 for order in orders:
                     takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
-                    address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
+                    address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
 
                     if user.gender == User.GENDER_MALE and address.property != Address.PROPERTY_FEMALE:
                         unorders[order.id] = (address.latitude, address.longitude)
@@ -368,12 +369,12 @@ class SuggestHandler(BasicHandler):
             data["order_list"] = list()
 
             if latitude and longitude:
-                temp_orders = {k: ((float(longitude) - v[0]) ** 2) + ((float(latitude) - v[1]) ** 2) for k, v in
+                temp_orders = {k: ((float(latitude) - v[0]) ** 2) + ((float(longitude) - v[1]) ** 2) for k, v in
                                unorders.items()}
                 sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
                 sort_orders = sort_orders[offset:offset + limit]
             else:
-                sort_orders = [(k, v) for k, v in unorders.items()]
+                raise PlException("经纬度必传")
 
             with open_session() as session:
                 for sort_order in sort_orders:
@@ -382,12 +383,18 @@ class SuggestHandler(BasicHandler):
                         draw_cratio = session.query(Config).filter(Config.key == "draw_cratio").one()
                         commission = (order.amount * Decimal(str(draw_cratio.value))).quantize(Decimal('0.00'))
 
+                        takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+                        address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
+                        distance = yield executor.submit(map_tx.get_distance, from_lat=latitude, from_lon=longitude,
+                                                         to_lat=address.latitude, to_lon=address.longitude)
+
                         order_info = dict()
                         order_info["id"] = order.id
                         order_info["state"] = order.state
                         order_info["amount"] = order.amount.__str__()
                         order_info["tip"] = order.tip.__str__()
                         order_info["total_amount"] = (order.tip + order.amount - commission).__str__()
+                        order_info["distance"] = distance
 
                         order_info["master_id"] = order.master_id
                         order_info["slave_id"] = order.slave_id
@@ -600,7 +607,7 @@ class AcceptHandler(BasicHandler):
                     order.state = Order.STATE_DISTRIBUTION
                     order.distribution_time = datetime.now()
 
-                # UNORDERS.pop(order.id)
+                    # UNORDERS.pop(order.id)
 
             self.response()
         except ParameterInvalidException as e:

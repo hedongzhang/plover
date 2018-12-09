@@ -33,6 +33,12 @@ pay_key: "Gao123456789aaaa987654312ggwwwww"
 code2session_url: "https://api.weixin.qq.com/sns/jscode2session"
 unifiedorder_url: "https://api.mch.weixin.qq.com/pay/unifiedorder"
 
+#########
+# MAP #
+#########
+map_url_tx: "https://apis.map.qq.com/ws/distance/v1"
+map_key_tx: "CYXBZ-WJIKJ-HCQFZ-FA4TS-TI4R5-SAFGT"
+
 
 #########
 # OTHER #
