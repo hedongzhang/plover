@@ -25,7 +25,7 @@ def add_system_config():
     url = BASE_URL + "config"
 
     post_vars = dict(
-        amount_per_order="2.2",
+        amount_per_order="2",
         draw_cratio="0.2",
         deposit="20",
         # 文案

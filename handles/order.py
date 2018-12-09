@@ -361,6 +361,8 @@ class SuggestHandler(BasicHandler):
                         unorders[order.id] = (address.latitude, address.longitude)
                     elif user.gender == User.GENDER_FEMALE and address.property != Address.PROPERTY_MALE:
                         unorders[order.id] = (address.latitude, address.longitude)
+                    elif user.gender == User.GENDER_UNKNOWN and address.property != Address.PROPERTY_FEMALE and address.property != Address.PROPERTY_MALE:
+                        unorders[order.id] = (address.latitude, address.longitude)
 
             data["count"] = len(unorders)
             data["order_list"] = list()
@@ -377,12 +379,16 @@ class SuggestHandler(BasicHandler):
                 for sort_order in sort_orders:
                     order = session.query(Order).filter(Order.id == sort_order[0]).one_or_none()
                     if order:
+                        draw_cratio = session.query(Config).filter(Config.key == "draw_cratio").one()
+                        commission = (order.amount * Decimal(str(draw_cratio.value))).quantize(Decimal('0.00'))
+
                         order_info = dict()
                         order_info["id"] = order.id
                         order_info["state"] = order.state
                         order_info["amount"] = order.amount.__str__()
                         order_info["tip"] = order.tip.__str__()
-                        order_info["total_amount"] = (order.tip + order.amount).__str__()
+                        order_info["total_amount"] = (order.tip + order.amount - commission).__str__()
+
                         order_info["master_id"] = order.master_id
                         order_info["slave_id"] = order.slave_id
 
