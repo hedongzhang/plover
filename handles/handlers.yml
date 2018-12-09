@@ -25,6 +25,8 @@ handlers:
   handler: handles.message.MessagesHandler
 - url: /api/user/account
   handler: handles.account.AccountHandler
+- url: /api/user/transactions
+  handler: handles.transaction.TransactionsHandler
 - url: /api/user/account/actions/deposit
   handler: handles.account.DepositHandler
 - url: /api/user/account/actions/redemption

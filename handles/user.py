@@ -50,6 +50,7 @@ class UserHandler(BasicHandler):
                 data["nick_name"] = user.nick_name
                 data["first_name"] = user.first_name
                 data["last_name"] = user.last_name
+                data["avatar_url"] = user.avatar_url
                 data["phone"] = user.phone
                 data["state"] = user.state
                 data["undone_order_count"] = undone_order_count

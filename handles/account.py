@@ -21,7 +21,7 @@ from handles.wx_api import unifiedorder, wx_sign
 from model.base import open_session
 from model.schema import TransactionOrder, TransactionNonOrder, Account, User
 from utiles.exception import ParameterInvalidException, PlException
-from utiles import random_tool,logger
+from utiles import random_tool, logger
 from conf import config
 
 
@@ -60,6 +60,7 @@ class AccountHandler(BasicHandler):
                     transaction_info["wx_transaction_id"] = transaction.wx_transaction_id
                     transaction_info["type"] = transaction.type
                     transaction_info["amount"] = transaction.amount.__str__()
+                    transaction_info["is_income"] = True if transaction.type == TransactionOrder.TYPE_COLLECT else False
                     transaction_info["commission"] = transaction.commission.__str__()
                     transaction_info["description"] = transaction.description
                     transaction_info["create_time"] = transaction.create_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -129,7 +130,7 @@ class DepositHandler(BasicHandler):
                 prepay_id = "wx201411101639507cbf6ffd8b0779950874"
             else:
                 # 调用统一下单API
-                callback_url = "https://{hostname}:{port}/api/order/{transaction_id}".format(
+                callback_url = "https://{hostname}:{port}/api/user/account/actions/deposit/{transaction_id}".format(
                     hostname=config.get("https_domain_name"),
                     port=config.get("https_listen_port"),
                     transaction_id=transaction.id)
@@ -181,7 +182,7 @@ class DepositHandler(BasicHandler):
 class DepositCallbackHandler(CallbackHandler):
     def post(self, transaction_id):
         try:
-            necessary_list = ["return_code", "return_msg"]
+            necessary_list = ["return_code"]
             request_args = self.request_args(necessary_list=necessary_list)
 
             with open_session() as session:
@@ -197,7 +198,8 @@ class DepositCallbackHandler(CallbackHandler):
                 if request_args["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
                     transaction.wx_transaction_id = request_args["transaction_id"]
                     transaction.state = TransactionNonOrder.STATE_FAILED
-                    transaction.description = "支付失败:%s" % request_args["return_msg"]
+                    transaction.description = "支付失败:%s" % request_args[
+                        "return_msg"] if "return_msg" in request_args else ""
                     self.response()
                     return
 

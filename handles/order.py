@@ -440,19 +440,20 @@ class AddtipHandler(BasicHandler):
                     transaction_id=random_string(),
                     wx_transaction_id=TransactionOrder.WX_TRANSACTION_ID,
                     type=TransactionOrder.TYPE_ADDTIP,
-                    amount=request_args["amount"],
+                    amount=Decimal(request_args["amount"]),
                     commission=0,
                     state=TransactionOrder.STATE_UNFINISH,
                     description="待支付"
                 )
                 session.add(transactionorder)
+                session.flush()
 
             # 调用微信支付API
             if config.get("debug"):
                 prepay_id = random_string()
             else:
                 # 调用统一下单API
-                callback_url = "https://{hostname}:{port}/api/order/{transaction_id}".format(
+                callback_url = "https://{hostname}:{port}/api/order/actions/addtip/{transaction_id}".format(
                     hostname=config.get("https_domain_name"),
                     port=config.get("https_listen_port"),
                     transaction_id=transactionorder.id)
@@ -761,7 +762,7 @@ class OrderCallbackHandler(CallbackHandler):
 class AddtipCallbackHandler(CallbackHandler):
     def post(self, transaction_id):
         try:
-            necessary_list = ["return_code", "return_msg"]
+            necessary_list = ["return_code"]
             request_args = self.request_args(necessary_list=necessary_list)
 
             with open_session() as session:
@@ -780,7 +781,8 @@ class AddtipCallbackHandler(CallbackHandler):
                 if request_args["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
                     transaction.wx_transaction_id = request_args["transaction_id"]
                     transaction.state = TransactionOrder.STATE_FAILED
-                    transaction.description = "支付失败:%s" % request_args["return_msg"]
+                    transaction.description = "支付失败:%s" % request_args[
+                        "return_msg"] if "return_msg" in request_args else ""
                     self.response()
                     return
 
