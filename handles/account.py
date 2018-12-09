@@ -60,7 +60,10 @@ class AccountHandler(BasicHandler):
                     transaction_info["wx_transaction_id"] = transaction.wx_transaction_id
                     transaction_info["type"] = transaction.type
                     transaction_info["amount"] = transaction.amount.__str__()
-                    transaction_info["is_income"] = True if transaction.type == TransactionOrder.TYPE_COLLECT else False
+                    if transaction.type == TransactionOrder.TYPE_COLLECT or transaction.type == TransactionOrder.TYPE_CANCEL:
+                        transaction_info["is_income"] = True
+                    else:
+                        transaction_info["is_income"] = False
                     transaction_info["commission"] = transaction.commission.__str__()
                     transaction_info["description"] = transaction.description
                     transaction_info["create_time"] = transaction.create_time.strftime("%Y-%m-%d %H:%M:%S")
