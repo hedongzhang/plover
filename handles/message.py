@@ -103,6 +103,8 @@ class MessagesHandler(BasicHandler):
                 if type:
                     query = query.filter(Message.type == type)
 
+                query = query.order_by(Message.create_time.desc())
+
                 data["count"] = query.count()
                 query = query.limit(limit)
                 query = query.offset(offset)

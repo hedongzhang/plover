@@ -37,6 +37,7 @@ class UserHandler(BasicHandler):
                             Order.slave_id == user.id,
                             Order.master_id == user.id,
                         ),
+                        Order.state != Order.STATE_UNPAID,
                         Order.state != Order.STATE_FINISH,
                         Order.state != Order.STATE_CANCEL
                     )
