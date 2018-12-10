@@ -305,6 +305,20 @@ class Config(Entity):
     update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
 
 
+class ADBanner(Entity):
+    """
+        广告配置表
+    """
+    __tablename__ = "adbanner"
+
+    image_url = Column(String(length=32), doc="图片url")
+    url = Column(String(length=32), doc="广告url")
+
+    description = Column(String(length=256), doc="备注")
+    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+
+
 if __name__ == '__main__':
     from model.base import open_session
 

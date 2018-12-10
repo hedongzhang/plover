@@ -155,7 +155,7 @@ class OrderHandler(BasicHandler):
                 )
                 session.add(transactionorder)
 
-                if account.amount >= order.amount:
+                if account.amount >= Decimal(str(order.amount)):
                     account.amount -= Decimal(str(order.amount))
                     order.state = Order.STATE_NOORDER
                     transactionorder.state = TransactionOrder.STATE_FINISH

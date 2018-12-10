@@ -9,6 +9,8 @@ max_body_size: 10485760
 certfile: "./conf/server.crt"
 keyfile: "./conf/server.key"
 
+static_path: "/storage/static"
+
 
 ############
 # DATABASE #

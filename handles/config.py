@@ -12,7 +12,7 @@ Description:
 
 from handles.base import BasicHandler
 from model.base import open_session
-from model.schema import Config
+from model.schema import Config, ADBanner
 from utiles import logger
 
 
@@ -43,3 +43,14 @@ class ConfigHandler(BasicHandler):
         except Exception as e:
             logger.exception()
             self.response_server_error(e)
+
+
+class ADBannerHandler(BasicHandler):
+    def get(self):
+        data = list()
+        with open_session() as session:
+            configs = session.query(ADBanner).all()
+            for config in configs:
+                data.append(dict(url=config.url, image=config.image_url))
+
+        self.response(data=data)
