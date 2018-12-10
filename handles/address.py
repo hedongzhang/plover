@@ -27,7 +27,7 @@ class AddressHandler(BasicHandler):
             id = self.get_argument("id")
 
             with open_session() as session:
-                address = session.query(Address).filter(Address.id == id).one()
+                address = session.query(Address).filter(Address.id == id, Address.state == Address.STATE_NORMAL).one()
 
                 data = dict()
                 data["id"] = address.id
@@ -126,7 +126,7 @@ class AddressHandler(BasicHandler):
             with open_session() as session:
                 address = session.query(Address).filter(Address.id == request_args["id"]).one_or_none()
                 if address:
-                    session.delete(address)
+                    address.state = Address.STATE_DELETE
 
             self.response()
         except ParameterInvalidException as e:
