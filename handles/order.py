@@ -22,7 +22,7 @@ from handles.base import BasicHandler, CallbackHandler, executor
 from handles.base import CALLBACK_RESPONSE_SUCCESS_CODE
 from handles.wx_api import unifiedorder, wx_sign
 from model.base import open_session
-from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User, Account, Verification
+from model.schema import Config, Order, Takeaway, TransactionOrder, Address, User, Account, Verification, Message
 from utiles.exception import ParameterInvalidException, PlException
 from utiles.random_tool import random_string, random_digits
 import utiles.sms_xa as sms
@@ -578,6 +578,20 @@ class CancleHandler(BasicHandler):
                 )
                 session.add(transactionorder)
 
+                # 生成消息
+                if user_id == order.master_id:
+                    message = Message(user_id=order.master_id, title="订单已取消", context="订单已被您取消，费用退回至账户余额",
+                                      state=Message.STATE_UNREAD)
+                    session.add(message)
+                    if order.slave_id:
+                        message = Message(user_id=order.slave_id, title="订单已取消", context="非常抱歉，订单已被雇主取消",
+                                          state=Message.STATE_UNREAD)
+                    session.add(message)
+                elif user_id == order.slave_id:
+                    message = Message(user_id=order.slave_id, title="订单已取消", context="非常抱歉，订单已被佣兵取消",
+                                      state=Message.STATE_UNREAD)
+                    session.add(message)
+
                 # UNORDERS.pop(order.id)
 
             self.response()
@@ -622,6 +636,10 @@ class AcceptHandler(BasicHandler):
 
                     # UNORDERS.pop(order.id)
 
+                message = Message(user_id=order.master_id, title="佣兵已接单", context="佣兵已接单，请耐心等待送达",
+                                  state=Message.STATE_UNREAD)
+                session.add(message)
+
             self.response()
         except ParameterInvalidException as e:
             logger.exception()
@@ -665,6 +683,11 @@ class ArriveHandler(BasicHandler):
                         sms.send_message(self.session_id, user.phone, "您的订单已到达取货点，请及时领取！")
                     except Exception as e:
                         logger.warn("send sms failed! :%s" % e)
+
+                    # 生成消息
+                    message = Message(user_id=order.slave_id, title="订单已取消", context="的订单已到达取货点，请及时领取！",
+                                      state=Message.STATE_UNREAD)
+                    session.add(message)
 
             self.response()
         except ParameterInvalidException as e:
@@ -724,6 +747,11 @@ class FinishHandler(BasicHandler):
                 )
                 session.add(transactionorder)
 
+                # 生成消息
+                message = Message(user_id=order.slave_id, title="订单已完成", context="佣兵已将外面送达，用餐愉快！",
+                                  state=Message.STATE_UNREAD)
+                session.add(message)
+
             self.response()
         except ParameterInvalidException as e:
             logger.exception()
@@ -766,7 +794,8 @@ class OrderCallbackHandler(CallbackHandler):
                 # 去除账户余额
                 user = session.query(User).filter(User.id == transaction.user_id).one()
                 account = session.query(Account).filter(Account.id == user.account_id).one()
-                temp_fee = transaction.amount - Decimal(request_args["total_fee"]).quantize(Decimal('0.00'))/Decimal("100")
+                temp_fee = transaction.amount - Decimal(request_args["total_fee"]).quantize(Decimal('0.00')) / Decimal(
+                    "100")
                 account.amount -= temp_fee
 
                 # 交易成功，更新交易状态

@@ -194,7 +194,7 @@ class Order(Entity):
     STATE_CANCEL = 6
 
     master_id = Column(Integer, nullable=False, doc="雇主id")
-    slave_id = Column(Integer, nullable=False, default=-1, doc="佣兵id")
+    slave_id = Column(Integer, nullable=False, default=0, doc="佣兵id")
     takeaway_id = Column(Integer, nullable=False, doc="外卖id")
     amount = Column(DECIMAL(10, 2), nullable=False, doc="订单金额")
     tip = Column(DECIMAL(10, 2), nullable=False, default=0, doc="小费")

@@ -63,7 +63,7 @@ class LoginHandler(BasicHandler):
             user = session.query(User).filter(User.openid == openid).one_or_none()
             if not user:
                 # 未注册用户首次登录
-                user = User(openid=openid, unionid=unionid, account_id=-1, gender=2, status=User.STATUS_LOGIN,
+                user = User(openid=openid, unionid=unionid, account_id=0, gender=2, status=User.STATUS_LOGIN,
                             state=User.STATE_NOT_CERTIFICATION, score=0, description="首次登录")
                 session.add(user)
                 session.flush()

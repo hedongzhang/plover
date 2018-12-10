@@ -64,6 +64,25 @@ class MessageHandler(BasicHandler):
             logger.exception()
             self.response_server_error(e)
 
+    def put(self):
+        try:
+            necessary_list = ["id", "state"]
+            request_args = self.request_args(necessary_list=necessary_list)
+
+            with open_session() as session:
+                message = session.query(Message).filter(Message.id == request_args["id"]).one_or_none()
+                if not message:
+                    raise PlException("此消息不存在")
+                message.state = request_args["state"]
+
+            self.response()
+        except ParameterInvalidException as e:
+            logger.exception()
+            self.response_request_error(e)
+        except Exception as e:
+            logger.exception()
+            self.response_server_error(e)
+
 
 class MessagesHandler(BasicHandler):
     def get(self):
