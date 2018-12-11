@@ -27,7 +27,10 @@ class AddressHandler(BasicHandler):
             id = self.get_argument("id")
 
             with open_session() as session:
-                address = session.query(Address).filter(Address.id == id, Address.state == Address.STATE_NORMAL).one()
+                address = session.query(Address).filter(Address.id == id,
+                                                        Address.state == Address.STATE_NORMAL).one_or_none()
+                if not address:
+                    raise PlException("此地址不存在！")
 
                 data = dict()
                 data["id"] = address.id
@@ -193,7 +196,7 @@ class AddressesHandler(BasicHandler):
 
             with open_session() as session:
                 query = session.query(Address)
-                query = query.filter(Address.user_id == user_id)
+                query = query.filter(Address.user_id == user_id, Address.state == Address.STATE_NORMAL)
 
                 if type:
                     query = query.filter(Address.type == type)
