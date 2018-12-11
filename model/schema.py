@@ -34,25 +34,25 @@ class User(Entity):
     STATE_NOT_CERTIFICATION = 1
     STATE_CERTIFICATION = 2
 
-    openid = Column(String(length=64), nullable=False, unique=True, doc="微信用户的openid")
-    unionid = Column(String(length=64), doc="微信用户的unionid")
-    account_id = Column(Integer, nullable=False, unique=True, doc="账户id, -1表示刚刚注册，在创建账户时中断")
-    nick_name = Column(String(length=64), doc="昵称")
-    avatar_url = Column(String(length=256), doc="头像URL")
-    gender = Column(Integer, nullable=False, doc="性别: 0-未知, 1-男, 2-女")
-    first_name = Column(String(length=64), doc="名")
-    last_name = Column(String(length=64), doc="姓")
-    phone = Column(String(length=16), doc="手机号")
-    school = Column(String(length=256), doc="学校")
-    id_number = Column(String(length=64), unique=True, doc="身份证号码")
-    id_photo_path = Column(String(length=256), unique=True, doc="身份证图片路径")
-    status = Column(Integer, nullable=False, doc="即时状态: 0-未登录，1-已经登录")
-    state = Column(Integer, nullable=False, doc="状态: 0-冻结, 1-未认证，2-已认证")
-    score = Column(Integer, nullable=False, doc="用户评分")
+    openid = Column(String(length=64), nullable=False, unique=True, comment="微信用户的openid")
+    unionid = Column(String(length=64), comment="微信用户的unionid")
+    account_id = Column(Integer, nullable=False, unique=True, comment="账户id, -1表示刚刚注册，在创建账户时中断")
+    nick_name = Column(String(length=64), comment="昵称")
+    avatar_url = Column(String(length=256), comment="头像URL")
+    gender = Column(Integer, nullable=False, comment="性别: 0-未知, 1-男, 2-女")
+    first_name = Column(String(length=64), comment="名")
+    last_name = Column(String(length=64), comment="姓")
+    phone = Column(String(length=16), comment="手机号")
+    school = Column(String(length=256), comment="学校")
+    id_number = Column(String(length=64), unique=True, comment="身份证号码")
+    id_photo_path = Column(String(length=256), unique=True, comment="身份证图片路径")
+    status = Column(Integer, nullable=False, comment="即时状态: 0-未登录，1-已经登录")
+    state = Column(Integer, nullable=False, comment="状态: 0-冻结, 1-未认证，2-已认证")
+    score = Column(Integer, nullable=False, comment="用户评分")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class Session(Entity):
@@ -61,13 +61,13 @@ class Session(Entity):
     """
     __tablename__ = "session"
 
-    user_id = Column(Integer, nullable=False, unique=True, doc="用户id")
-    session_id = Column(String(length=128), nullable=False, doc="用户session_id")
-    wx_session_key = Column(String(length=128), nullable=False, unique=True, doc="微信登录session")
+    user_id = Column(Integer, nullable=False, unique=True, comment="用户id")
+    session_id = Column(String(length=128), nullable=False, comment="用户session_id")
+    wx_session_key = Column(String(length=128), nullable=False, unique=True, comment="微信登录session")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class Message(Entity):
@@ -81,15 +81,15 @@ class Message(Entity):
 
     TYPE_NORMAL = 0
 
-    user_id = Column(Integer, nullable=False, doc="用户id")
-    title = Column(String(length=64), doc="标题")
-    context = Column(String(length=512), doc="内容")
-    type = Column(Integer, nullable=False, default=0, doc="类型: 0-一般消息")
-    state = Column(Integer, nullable=False, doc="状态: 0-未读, 1-已读")
+    user_id = Column(Integer, nullable=False, comment="用户id")
+    title = Column(String(length=64), comment="标题")
+    context = Column(String(length=512), comment="内容")
+    type = Column(Integer, nullable=False, default=0, comment="类型: 0-一般消息")
+    state = Column(Integer, nullable=False, comment="状态: 0-未读, 1-已读")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class Address(Entity):
@@ -110,23 +110,23 @@ class Address(Entity):
     STATE_NORMAL = 1
     STATE_DELETE = 0
 
-    user_id = Column(Integer, nullable=False, doc="用户id")
-    shop_name = Column(String(length=64), doc="商家名称")
-    type = Column(Integer, nullable=False, default=0, doc="类型: 0-取货地址, 1-收货地址")
-    property = Column(Integer, nullable=False, doc="属性: 0-女生宿舍，1-男生宿舍，2-图书馆，3-教学楼，4-其他")
-    state = Column(Integer, nullable=False, default=1, doc="属性: 0-已删除，1-正常")
-    first_name = Column(String(length=64), doc="名")
-    last_name = Column(String(length=64), doc="姓")
-    phone = Column(String(length=16), doc="手机号")
-    first_address = Column(String(length=256), doc="大致地址")
-    last_address = Column(String(length=256), doc="详细地址")
-    latitude = Column(Float(32), nullable=False, doc="纬度")
-    longitude = Column(Float(32), nullable=False, doc="经度")
-    default = Column(Boolean, nullable=False, doc="是否为默认地址")
+    user_id = Column(Integer, nullable=False, comment="用户id")
+    shop_name = Column(String(length=64), comment="商家名称")
+    type = Column(Integer, nullable=False, default=0, comment="类型: 0-取货地址, 1-收货地址")
+    property = Column(Integer, nullable=False, comment="属性: 0-女生宿舍，1-男生宿舍，2-图书馆，3-教学楼，4-其他")
+    state = Column(Integer, nullable=False, default=1, comment="属性: 0-已删除，1-正常")
+    first_name = Column(String(length=64), comment="名")
+    last_name = Column(String(length=64), comment="姓")
+    phone = Column(String(length=16), comment="手机号")
+    first_address = Column(String(length=256), comment="大致地址")
+    last_address = Column(String(length=256), comment="详细地址")
+    latitude = Column(Float(32), nullable=False, comment="纬度")
+    longitude = Column(Float(32), nullable=False, comment="经度")
+    default = Column(Boolean, nullable=False, comment="是否为默认地址")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class Account(Entity):
@@ -138,14 +138,14 @@ class Account(Entity):
     STATE_FREEZE = 0
     STATE_NORMAL = 1
 
-    user_id = Column(Integer, nullable=False, unique=True, doc="用户id")
-    amount = Column(DECIMAL(10, 2), nullable=False, doc="账户余额")
-    deposit = Column(DECIMAL(10, 2), nullable=False, doc="押金")
-    state = Column(Integer, nullable=False, doc="状态: 0-冻结, 1-正常")
+    user_id = Column(Integer, nullable=False, unique=True, comment="用户id")
+    amount = Column(DECIMAL(10, 2), nullable=False, comment="账户余额")
+    deposit = Column(DECIMAL(10, 2), nullable=False, comment="押金")
+    state = Column(Integer, nullable=False, comment="状态: 0-冻结, 1-正常")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class Verification(Entity):
@@ -154,13 +154,13 @@ class Verification(Entity):
     """
     __tablename__ = "verification"
 
-    phone = Column(String(length=16), nullable=False, unique=True, doc="手机号")
-    verification_code = Column(String(length=64), nullable=False, doc="验证码")
-    count = Column(Integer, nullable=False, doc="获取次数")
+    phone = Column(String(length=16), nullable=False, unique=True, comment="手机号")
+    verification_code = Column(String(length=64), nullable=False, comment="验证码")
+    count = Column(Integer, nullable=False, comment="获取次数")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class Suggestion(Entity):
@@ -169,14 +169,14 @@ class Suggestion(Entity):
     """
     __tablename__ = "suggestion"
 
-    user_id = Column(Integer, nullable=False, doc="用户id")
-    context = Column(String(length=1024), doc="内容")
-    path = Column(String(length=256), doc="截图路径")
-    contact = Column(String(length=32), doc="联系方式")
+    user_id = Column(Integer, nullable=False, comment="用户id")
+    context = Column(String(length=1024), comment="内容")
+    path = Column(String(length=256), comment="截图路径")
+    contact = Column(String(length=32), comment="联系方式")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class Order(Entity):
@@ -193,20 +193,20 @@ class Order(Entity):
     STATE_FINISH = 5
     STATE_CANCEL = 6
 
-    master_id = Column(Integer, nullable=False, doc="雇主id")
-    slave_id = Column(Integer, nullable=False, default=0, doc="佣兵id")
-    takeaway_id = Column(Integer, nullable=False, doc="外卖id")
-    amount = Column(DECIMAL(10, 2), nullable=False, doc="订单金额")
-    tip = Column(DECIMAL(10, 2), nullable=False, default=0, doc="小费")
-    verification_code = Column(String(length=64), nullable=False, doc="验证码")
-    state = Column(Integer, nullable=False, doc="状态: 0-未支付，1-未接单，2-已接单，3-配送中，4-已送达, 5-完成, 6-已取消")
-    order_time = Column(DateTime, default=datetime.now, doc="接单时间utc")
-    distribution_time = Column(DateTime, default=datetime.now, doc="配送时间utc")
-    finish_time = Column(DateTime, default=datetime.now, doc="完成时间utc")
+    master_id = Column(Integer, nullable=False, comment="雇主id")
+    slave_id = Column(Integer, nullable=False, default=0, comment="佣兵id")
+    takeaway_id = Column(Integer, nullable=False, comment="外卖id")
+    amount = Column(DECIMAL(10, 2), nullable=False, comment="订单金额")
+    tip = Column(DECIMAL(10, 2), nullable=False, default=0, comment="小费")
+    verification_code = Column(String(length=64), nullable=False, comment="验证码")
+    state = Column(Integer, nullable=False, comment="状态: 0-未支付，1-未接单，2-已接单，3-配送中，4-已送达, 5-完成, 6-已取消")
+    order_time = Column(DateTime, default=datetime.now, comment="接单时间utc")
+    distribution_time = Column(DateTime, default=datetime.now, comment="配送时间utc")
+    finish_time = Column(DateTime, default=datetime.now, comment="完成时间utc")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class Takeaway(Entity):
@@ -218,15 +218,15 @@ class Takeaway(Entity):
     STATE_NOT_ARRIVE = 0
     STATE_ARRIVE = 1
 
-    name = Column(String(length=64), doc="名称")
-    tack_address_id = Column(Integer, nullable=False, doc="起始地址id")
-    recive_address_id = Column(Integer, nullable=False, doc="送达地址id")
-    state = Column(Integer, nullable=False, doc="状态: 0-未到中转站，1-已到中转站")
-    distribution_time = Column(DateTime, doc="确认到达中转站时间utc")
+    name = Column(String(length=64), comment="名称")
+    tack_address_id = Column(Integer, nullable=False, comment="起始地址id")
+    recive_address_id = Column(Integer, nullable=False, comment="送达地址id")
+    state = Column(Integer, nullable=False, comment="状态: 0-未到中转站，1-已到中转站")
+    distribution_time = Column(DateTime, comment="确认到达中转站时间utc")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class TransactionOrder(Entity):
@@ -247,18 +247,18 @@ class TransactionOrder(Entity):
     STATE_FAILED = 2
     STATE_ABNORMAL = 3
 
-    user_id = Column(Integer, nullable=False, doc="用户id")
-    order_id = Column(Integer, nullable=False, doc="订单id")
-    transaction_id = Column(String(length=128), nullable=False, doc="交易id")
-    wx_transaction_id = Column(String(length=64), nullable=False, doc="微信交易id, 0-未实际发生微信交易")
-    type = Column(Integer, nullable=False, doc="0-雇主下单, 1-雇主增加小费, 2-取消订单, 3-佣兵收款")
-    state = Column(Integer, nullable=False, doc="交易状态，0-未完成，1-已完成, 2-交易失败, 3-交易异常")
-    amount = Column(DECIMAL(10, 2), nullable=False, doc="交易金额")
-    commission = Column(DECIMAL(10, 2), nullable=False, doc="平台佣金")
+    user_id = Column(Integer, nullable=False, comment="用户id")
+    order_id = Column(Integer, nullable=False, comment="订单id")
+    transaction_id = Column(String(length=128), nullable=False, comment="交易id")
+    wx_transaction_id = Column(String(length=64), nullable=False, comment="微信交易id, 0-未实际发生微信交易")
+    type = Column(Integer, nullable=False, comment="0-雇主下单, 1-雇主增加小费, 2-取消订单, 3-佣兵收款")
+    state = Column(Integer, nullable=False, comment="交易状态，0-未完成，1-已完成, 2-交易失败, 3-交易异常")
+    amount = Column(DECIMAL(10, 2), nullable=False, comment="交易金额")
+    commission = Column(DECIMAL(10, 2), nullable=False, comment="平台佣金")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class TransactionNonOrder(Entity):
@@ -280,16 +280,16 @@ class TransactionNonOrder(Entity):
     STATE_FAILED = 2
     STATE_ABNORMAL = 3
 
-    user_id = Column(Integer, nullable=False, doc="用户id")
-    transaction_id = Column(String(length=128), nullable=False, doc="交易id")
-    wx_transaction_id = Column(String(length=128), nullable=False, doc="微信交易id, 0-未实际发生微信交易")
-    type = Column(Integer, nullable=False, doc="0-管理员操作, 1-缴纳押金，2-退还押金，3-存入账户，4-从账户提现")
-    state = Column(Integer, nullable=False, doc="交易状态，0-未完成，1-已完成, 2-交易失败, 3-交易异常")
-    amount = Column(DECIMAL(10, 2), nullable=False, doc="交易金额")
+    user_id = Column(Integer, nullable=False, comment="用户id")
+    transaction_id = Column(String(length=128), nullable=False, comment="交易id")
+    wx_transaction_id = Column(String(length=128), nullable=False, comment="微信交易id, 0-未实际发生微信交易")
+    type = Column(Integer, nullable=False, comment="0-管理员操作, 1-缴纳押金，2-退还押金，3-存入账户，4-从账户提现")
+    state = Column(Integer, nullable=False, comment="交易状态，0-未完成，1-已完成, 2-交易失败, 3-交易异常")
+    amount = Column(DECIMAL(10, 2), nullable=False, comment="交易金额")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class Config(Entity):
@@ -300,13 +300,13 @@ class Config(Entity):
 
     TYPE_NORMAL = 0
 
-    key = Column(String(length=32), doc="配置名称")
-    value = Column(String(length=32), doc="配置值")
-    type = Column(String(length=32), doc="类型: 0-一般配置")
+    key = Column(String(length=32), comment="配置名称")
+    value = Column(String(length=32), comment="配置值")
+    type = Column(String(length=32), comment="类型: 0-一般配置")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 class ADBanner(Entity):
@@ -315,12 +315,12 @@ class ADBanner(Entity):
     """
     __tablename__ = "adbanner"
 
-    image_url = Column(String(length=32), doc="图片url")
-    url = Column(String(length=32), doc="广告url")
+    image_url = Column(String(length=32), comment="图片url")
+    url = Column(String(length=32), comment="广告url")
 
-    description = Column(String(length=256), doc="备注")
-    create_time = Column(DateTime, default=datetime.now, doc="创建时间utc")
-    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, doc="更新时间utc")
+    description = Column(String(length=256), comment="备注")
+    create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")
+    update_time = Column(DateTime, onupdate=datetime.now, default=datetime.now, comment="更新时间utc")
 
 
 if __name__ == '__main__':
