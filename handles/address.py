@@ -62,6 +62,7 @@ class AddressHandler(BasicHandler):
             with open_session() as session:
                 default_address = session.query(Address).filter(Address.user_id == request_args["user_id"],
                                                                 Address.type == request_args["type"],
+                                                                Address.state == Address.STATE_NORMAL,
                                                                 Address.default == True).one_or_none()
                 if request_args["default"] and default_address:
                     default_address.default = False
@@ -105,6 +106,7 @@ class AddressHandler(BasicHandler):
                 if request_args["default"]:
                     default_address = session.query(Address).filter(Address.user_id == address.user_id,
                                                                     Address.type == address.type,
+                                                                    Address.state == Address.STATE_NORMAL,
                                                                     Address.default == True).one_or_none()
                     if default_address:
                         default_address.default = False
