@@ -60,12 +60,13 @@ class AddressHandler(BasicHandler):
             request_args = self.request_args(necessary_list=properties)
 
             with open_session() as session:
-                default_address = session.query(Address).filter(Address.user_id == request_args["user_id"],
+                if request_args["default"]:
+                    default_addresses = session.query(Address).filter(Address.user_id == request_args["user_id"],
                                                                 Address.type == request_args["type"],
                                                                 Address.state == Address.STATE_NORMAL,
-                                                                Address.default == True).one_or_none()
-                if request_args["default"] and default_address:
-                    default_address.default = False
+                                                                Address.default == True).all()
+                    for default_address in default_addresses:
+                        default_address.default = False
 
                 address = Address(
                     user_id=request_args["user_id"],
@@ -103,12 +104,12 @@ class AddressHandler(BasicHandler):
                 if not address:
                     raise Exception("This address is not exist !")
 
-                if request_args["default"]:
-                    default_address = session.query(Address).filter(Address.user_id == address.user_id,
-                                                                    Address.type == address.type,
-                                                                    Address.state == Address.STATE_NORMAL,
-                                                                    Address.default == True).one_or_none()
-                    if default_address:
+                if "default" in request_args and request_args["default"]:
+                    default_addresses = session.query(Address).filter(Address.user_id == address.user_id,
+                                                                      Address.type == address.type,
+                                                                      Address.state == Address.STATE_NORMAL,
+                                                                      Address.default == True).all()
+                    for default_address in default_addresses:
                         default_address.default = False
 
                 for property in properties:
@@ -151,23 +152,25 @@ class AddressDefaultHandler(BasicHandler):
             data = dict(tack_address=None, recive_address=None)
 
             with open_session() as session:
-                default_tack_address = session.query(Address).filter(Address.user_id == user_id,
+                default_tack_addresses = session.query(Address).filter(Address.user_id == user_id,
                                                                      Address.type == Address.TYPE_TACK,
-                                                                     Address.default == True).one_or_none()
+                                                                     Address.state == Address.STATE_NORMAL,
+                                                                     Address.default == True).all()
 
-                if default_tack_address:
-                    data["tack_address"] = dict(id=default_tack_address.id)
+                if default_tack_addresses:
+                    data["tack_address"] = dict(id=default_tack_addresses[0].id)
                     for property in properties:
-                        data["tack_address"][property] = default_tack_address.__getattribute__(property)
+                        data["tack_address"][property] = default_tack_addresses[0].__getattribute__(property)
 
-                default_recive_address = session.query(Address).filter(Address.user_id == user_id,
+                default_recive_addresses = session.query(Address).filter(Address.user_id == user_id,
                                                                        Address.type == Address.TYPE_RECIVE,
-                                                                       Address.default == True).one_or_none()
+                                                                       Address.state == Address.STATE_NORMAL,
+                                                                       Address.default == True).all()
 
-                if default_recive_address:
-                    data["recive_address"] = dict(id=default_recive_address.id)
+                if default_recive_addresses:
+                    data["recive_address"] = dict(id=default_recive_addresses[0].id)
                     for property in properties:
-                        data["recive_address"][property] = default_recive_address.__getattribute__(property)
+                        data["recive_address"][property] = default_recive_addresses[0].__getattribute__(property)
 
             self.response(data)
         except ParameterInvalidException as e:

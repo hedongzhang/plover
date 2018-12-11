@@ -327,11 +327,22 @@ class CalculateHandler(BasicHandler):
     def get(self):
         try:
             session_id = self.get_argument("session_id")
+            # user_id = self.get_argument("user_id")
             count = self.get_argument("count")
 
             with open_session() as session:
                 amount_per_order = session.query(Config).filter(Config.key == "amount_per_order").one()
+                # account = session.query(Account).filter(Account.user_id == user_id).one()
+
                 amount = Decimal(amount_per_order.value) * Decimal(count)
+                # if account.amount >= amount:
+                #     balance = amount
+                #     wx_amount = 0
+                # else:
+                #     balance = account.amount
+                #     wx_amount = amount - account.amount
+
+                # data = dict(amount=float(amount), balance=balance, wx_amount=wx_amount)
                 data = dict(amount=float(amount))
 
             self.response(data)
@@ -592,7 +603,7 @@ class CancleHandler(BasicHandler):
                                       state=Message.STATE_UNREAD)
                     session.add(message)
 
-                # UNORDERS.pop(order.id)
+                    # UNORDERS.pop(order.id)
 
             self.response()
         except ParameterInvalidException as e:
@@ -636,7 +647,8 @@ class AcceptHandler(BasicHandler):
 
                     # UNORDERS.pop(order.id)
 
-                message = Message(user_id=order.master_id, title="佣兵已接单", context="佣兵已接单，请耐心等待送达",
+                message = Message(user_id=order.master_id, title="佣兵%s同学已接单" % user.first_name,
+                                  context="佣兵%s同学已接单，请耐心等待送达" % user.first_name,
                                   state=Message.STATE_UNREAD)
                 session.add(message)
 
@@ -672,6 +684,8 @@ class ArriveHandler(BasicHandler):
                 # 到达
                 takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
                 takeaway.state = Takeaway.STATE_ARRIVE
+
+                order.distribution_time = datetime.now()
 
                 if order.state == Order.STATE_ORDERS:
                     order.state = Order.STATE_DISTRIBUTION

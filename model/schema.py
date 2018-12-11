@@ -315,8 +315,8 @@ class ADBanner(Entity):
     """
     __tablename__ = "adbanner"
 
-    image_url = Column(String(length=32), comment="图片url")
-    url = Column(String(length=32), comment="广告url")
+    image_url = Column(String(length=512), comment="图片url")
+    url = Column(String(length=512), comment="广告url")
 
     description = Column(String(length=256), comment="备注")
     create_time = Column(DateTime, default=datetime.now, comment="创建时间utc")

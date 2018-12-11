@@ -112,6 +112,7 @@ class MessagesHandler(BasicHandler):
                 data["message_list"] = list()
 
                 for message in query.all():
+                    message.state = Message.STATE_READED
                     message_info = dict()
                     message_info["id"] = message.id
                     message_info["type"] = message.type
