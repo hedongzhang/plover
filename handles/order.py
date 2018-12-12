@@ -95,7 +95,8 @@ class OrderHandler(BasicHandler):
                 )
                 data["takeaway_info"] = dict(
                     id=takeaway.id,
-                    state=takeaway.state
+                    state=takeaway.state,
+                    count=takeaway.count
                 )
 
                 self.response(data)
@@ -109,7 +110,7 @@ class OrderHandler(BasicHandler):
     @gen.coroutine
     def post(self):
         try:
-            necessary_list = ["master_id", "tack_address_id", "recive_address_id", "takeaway_state", "amount",
+            necessary_list = ["master_id", "tack_address_id", "recive_address_id", "takeaway_state", "amount", "count",
                               "description"]
             request_args = self.request_args(necessary_list=necessary_list)
 
@@ -130,7 +131,8 @@ class OrderHandler(BasicHandler):
                 takeaway = Takeaway(
                     tack_address_id=request_args["tack_address_id"],
                     recive_address_id=request_args["recive_address_id"],
-                    state=request_args["takeaway_state"]
+                    state=request_args["takeaway_state"],
+                    count=request_args["count"]
                 )
                 if takeaway.state == Takeaway.STATE_ARRIVE:
                     takeaway.distribution_time = datetime.now()
@@ -296,6 +298,7 @@ class OrdersHandler(BasicHandler):
                     order_info = dict()
                     order_info["id"] = order.id
                     order_info["state"] = order.state
+                    order_info["count"] = takeaway.count
                     order_info["amount"] = order.amount.__str__()
                     order_info["tip"] = order.tip.__str__()
                     order_info["master_amount"] = (order.tip + order.amount).__str__()
@@ -432,6 +435,7 @@ class SuggestHandler(BasicHandler):
                         order_info["tip"] = order.tip.__str__()
                         order_info["total_amount"] = (order.tip + order.amount - commission).__str__()
                         order_info["distance"] = distance
+                        order_info["count"] = takeaway.count
 
                         order_info["master_id"] = order.master_id
                         order_info["slave_id"] = order.slave_id
@@ -628,6 +632,7 @@ class CancleHandler(BasicHandler):
 
 
 class AcceptHandler(BasicHandler):
+    @gen.coroutine
     def post(self):
         try:
             necessary_list = ["user_id", "order_id"]
@@ -794,7 +799,8 @@ class FinishHandler(BasicHandler):
                 session.add(transactionorder)
 
                 # 生成消息
-                message = Message(user_id=order.master_id, title="订单已完成", context="佣兵已将外卖送达，用餐愉快！",
+                message = Message(user_id=order.master_id, title="订单已完成",
+                                  context="佣兵%s同学已将外卖送达，用餐愉快！" % user.first_name,
                                   state=Message.STATE_UNREAD)
                 session.add(message)
 

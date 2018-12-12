@@ -222,6 +222,7 @@ class Takeaway(Entity):
     tack_address_id = Column(Integer, nullable=False, comment="起始地址id")
     recive_address_id = Column(Integer, nullable=False, comment="送达地址id")
     state = Column(Integer, nullable=False, comment="状态: 0-未到中转站，1-已到中转站")
+    count = Column(Integer, nullable=False, comment="外卖份数")
     distribution_time = Column(DateTime, comment="确认到达中转站时间utc")
 
     description = Column(String(length=256), comment="备注")

@@ -46,7 +46,8 @@ class AccountHandler(BasicHandler):
                 data["income"] = 0
                 data["transaction_list"] = list()
 
-                query = session.query(TransactionOrder).filter(TransactionOrder.user_id == user_id)
+                query = session.query(TransactionOrder).filter(TransactionOrder.user_id == user_id,
+                                                               TransactionOrder.state == TransactionOrder.STATE_FINISH)
                 query = query.order_by(TransactionOrder.create_time.desc()).limit(config.get("query_num"))
                 transactions = query.all()
 
