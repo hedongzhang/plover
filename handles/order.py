@@ -54,7 +54,14 @@ class OrderHandler(BasicHandler):
                 data["state"] = order.state
                 data["amount"] = order.amount.__str__()
                 data["tip"] = order.tip.__str__()
-                data["total_amount"] = (order.tip + order.amount).__str__()
+                data["mater_amount"] = (order.tip + order.amount).__str__()
+
+                amount = order.amount + order.tip
+                draw_cratio = session.query(Config).filter(Config.key == "draw_cratio").one()
+                commission = (amount * Decimal(str(draw_cratio.value))).quantize(Decimal('0.00'))
+                data["slave_amount"] = (amount - commission).__str__()
+                data["commission"] = commission.__str__()
+
                 data["verification_code"] = order.verification_code
 
                 data["create_time"] = order.create_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -291,7 +298,13 @@ class OrdersHandler(BasicHandler):
                     order_info["state"] = order.state
                     order_info["amount"] = order.amount.__str__()
                     order_info["tip"] = order.tip.__str__()
-                    order_info["total_amount"] = (order.tip + order.amount).__str__()
+                    order_info["master_amount"] = (order.tip + order.amount).__str__()
+
+                    amount = order.amount + order.tip
+                    draw_cratio = session.query(Config).filter(Config.key == "draw_cratio").one()
+                    commission = (amount * Decimal(str(draw_cratio.value))).quantize(Decimal('0.00'))
+                    order_info["slave_amount"] = (amount - commission).__str__()
+
                     order_info["master_id"] = order.master_id
                     order_info["slave_id"] = order.slave_id
 
@@ -662,6 +675,7 @@ class AcceptHandler(BasicHandler):
 
 
 class ArriveHandler(BasicHandler):
+    @gen.coroutine
     def post(self):
         try:
             necessary_list = ["user_id", "order_id"]
@@ -694,12 +708,15 @@ class ArriveHandler(BasicHandler):
                     # 调用短信接口，发送短信通知
                     try:
                         user = session.query(User).filter(User.id == order.slave_id).one()
-                        sms.send_message(self.session_id, user.phone, "您的订单已到达取货点，请及时领取！")
+                        yield executor.submit(sms.send_message, business_id=self.session_id,
+                                              phone_numbers=user.phone,
+                                              message="雇主%s同学的订单已到达取货点，请及时领取！" % user.first_name)
                     except Exception as e:
                         logger.warn("send sms failed! :%s" % e)
 
                     # 生成消息
-                    message = Message(user_id=order.slave_id, title="订单已取消", context="的订单已到达取货点，请及时领取！",
+                    message = Message(user_id=order.slave_id, title="雇主%s同学的订单已到达取货点" % user.first_name,
+                                      context="雇主%s同学的订单已到达取货点，请及时领取！" % user.first_name,
                                       state=Message.STATE_UNREAD)
                     session.add(message)
 
@@ -745,7 +762,7 @@ class FinishHandler(BasicHandler):
                 commission = (amount * Decimal(str(draw_cratio.value))).quantize(Decimal('0.00'))
                 # 订单金额和小费划入佣兵账户
                 account = session.query(Account).filter(Account.id == user.account_id).one()
-                account.amount += amount - commission
+                account.amount += (amount - commission)
 
                 # 生成交易数据
                 transactionorder = TransactionOrder(
@@ -762,7 +779,7 @@ class FinishHandler(BasicHandler):
                 session.add(transactionorder)
 
                 # 生成消息
-                message = Message(user_id=order.slave_id, title="订单已完成", context="佣兵已将外面送达，用餐愉快！",
+                message = Message(user_id=order.master_id, title="订单已完成", context="佣兵已将外卖送达，用餐愉快！",
                                   state=Message.STATE_UNREAD)
                 session.add(message)
 

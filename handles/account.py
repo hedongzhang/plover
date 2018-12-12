@@ -59,7 +59,8 @@ class AccountHandler(BasicHandler):
                     transaction_info["order_id"] = transaction.order_id
                     transaction_info["wx_transaction_id"] = transaction.wx_transaction_id
                     transaction_info["type"] = transaction.type
-                    transaction_info["amount"] = transaction.amount.__str__()
+                    transaction_info["amount"] = (transaction.amount - transaction.commission).__str__()
+                    transaction_info["slave_amount"] = (transaction.amount - transaction.commission).__str__()
                     if transaction.type == TransactionOrder.TYPE_COLLECT or transaction.type == TransactionOrder.TYPE_CANCEL:
                         transaction_info["is_income"] = True
                     else:
@@ -68,7 +69,8 @@ class AccountHandler(BasicHandler):
                     transaction_info["description"] = transaction.description
                     transaction_info["create_time"] = transaction.create_time.strftime("%Y-%m-%d %H:%M:%S")
                     # gyp要求
-                    if transaction_info["type"] in [TransactionOrder.TYPE_CANCEL, TransactionOrder.TYPE_COLLECT]:
+                    if transaction_info["type"] in [TransactionOrder.TYPE_CANCEL, TransactionOrder.TYPE_ORDERS,
+                                                    TransactionOrder.TYPE_COLLECT]:
                         data["transaction_list"].append(transaction_info)
                 data["income"] = data["income"].__str__()
 
