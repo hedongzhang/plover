@@ -658,6 +658,21 @@ class AcceptHandler(BasicHandler):
                     order.state = Order.STATE_DISTRIBUTION
                     order.distribution_time = datetime.now()
 
+                    # 调用短信接口，发送短信通知
+                    try:
+                        master_user = session.query(User).filter(User.id == order.master_id).one()
+                        yield executor.submit(sms.send_message, business_id=self.session_id,
+                                              phone_numbers=user.phone,
+                                              message="雇主%s同学的订单已到达取货点，请及时领取！" % master_user.first_name)
+                    except Exception as e:
+                        logger.warn("send sms failed! :%s" % e)
+
+                    # 生成消息
+                    message = Message(user_id=order.slave_id, title="雇主%s同学的订单已到达取货点" % master_user.first_name,
+                                      context="雇主%s同学的订单已到达取货点，请及时领取！" % master_user.first_name,
+                                      state=Message.STATE_UNREAD)
+                    session.add(message)
+
                     # UNORDERS.pop(order.id)
 
                 message = Message(user_id=order.master_id, title="佣兵%s同学已接单" % user.first_name,
@@ -707,9 +722,9 @@ class ArriveHandler(BasicHandler):
 
                     # 调用短信接口，发送短信通知
                     try:
-                        user = session.query(User).filter(User.id == order.slave_id).one()
+                        slave_user = session.query(User).filter(User.id == order.slave_id).one()
                         yield executor.submit(sms.send_message, business_id=self.session_id,
-                                              phone_numbers=user.phone,
+                                              phone_numbers=slave_user.phone,
                                               message="雇主%s同学的订单已到达取货点，请及时领取！" % user.first_name)
                     except Exception as e:
                         logger.warn("send sms failed! :%s" % e)
