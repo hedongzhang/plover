@@ -19,7 +19,7 @@ from handles.base import BasicHandler, CallbackHandler, executor
 from handles.base import CALLBACK_RESPONSE_SUCCESS_CODE
 from handles.wx_api import unifiedorder, wx_sign
 from model.base import open_session
-from model.schema import TransactionOrder, TransactionNonOrder, Account, User
+from model.schema import TransactionOrder, TransactionNonOrder, Account, User, Message
 from utiles.exception import ParameterInvalidException, PlException
 from utiles import random_tool, logger
 from conf import config
@@ -39,6 +39,16 @@ class AccountHandler(BasicHandler):
                 data["id"] = account.id
                 data["user_id"] = user.id
                 data["amount"] = account.amount.__str__()
+
+                unfinish_withdraw_orders = session.query(TransactionNonOrder).filter(
+                    TransactionNonOrder.user_id == user_id,
+                    TransactionNonOrder.state == TransactionNonOrder.STATE_UNFINISH,
+                    TransactionNonOrder.type == TransactionNonOrder.TYPE_WITHDRAW_CASH).all()
+                unfinish_withdraw_amount = Decimal("0.00")
+                for unfinish_withdraw_order in unfinish_withdraw_orders:
+                    unfinish_withdraw_amount += unfinish_withdraw_order.amount
+                data["withdraw_amount"] = (account.amount - unfinish_withdraw_amount).__str__()
+
                 data["deposit"] = account.deposit.__str__()
                 data["state"] = account.state
                 data["description"] = account.description
@@ -280,20 +290,21 @@ class WithdrawHandler(BasicHandler):
             request_args = self.request_args(necessary_list=necessary_list)
 
             user_id = request_args["user_id"]
-            amount = request_args["amount"]
+            amount = Decimal(str(request_args["amount"]))
             transaction_id = random_tool.random_string()
 
             with open_session() as session:
                 account = session.query(Account).filter(Account.user_id == user_id).one()
-                unfinish_orders = session.query(TransactionNonOrder).filter(
+
+                unfinish_withdraw_orders = session.query(TransactionNonOrder).filter(
                     TransactionNonOrder.user_id == user_id,
                     TransactionNonOrder.state == TransactionNonOrder.STATE_UNFINISH,
                     TransactionNonOrder.type == TransactionNonOrder.TYPE_WITHDRAW_CASH).all()
+                unfinish_withdraw_amount = Decimal("0.00")
+                for unfinish_withdraw_order in unfinish_withdraw_orders:
+                    unfinish_withdraw_amount += unfinish_withdraw_order.amount
 
-                if unfinish_orders:
-                    raise PlException("存在未完成的提现请求，请完成后再继续申请提现")
-
-                if account.amount < amount:
+                if account.amount - unfinish_withdraw_amount < amount:
                     raise PlException("余额不足，请确认金额是否正确")
 
                 transaction = TransactionNonOrder(
@@ -308,6 +319,12 @@ class WithdrawHandler(BasicHandler):
                 session.add(transaction)
                 session.flush()
 
+                # 生成消息
+                message = Message(user_id=user_id, title="提现",
+                                  context="提现请求已确认，等待到账",
+                                  state=Message.STATE_UNREAD)
+                session.add(message)
+
             self.response()
         except ParameterInvalidException as e:
             logger.exception()
@@ -315,3 +332,61 @@ class WithdrawHandler(BasicHandler):
         except Exception as e:
             logger.exception()
             self.response_server_error(e)
+
+
+class WithdrawCallbackHandler(CallbackHandler):
+    def post(self, transaction_id):
+        try:
+            necessary_list = ["return_code"]
+            # request_args = self.request_args(necessary_list=necessary_list)
+            request_args = self.request_args()
+
+            with open_session() as session:
+                transaction = session.query(TransactionNonOrder).filter(
+                    TransactionNonOrder.id == transaction_id).one_or_none()
+                if not transaction:
+                    raise PlException("无效的订单ID")
+
+                if transaction.state == TransactionNonOrder.STATE_FINISH:
+                    self.response()
+                    return
+
+                # if request_args["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                #     transaction.wx_transaction_id = request_args["transaction_id"]
+                #     transaction.state = TransactionNonOrder.STATE_FAILED
+                #     transaction.description = "支付失败:%s" % request_args[
+                #         "return_msg"] if "return_msg" in request_args else ""
+                #     self.response()
+                #     return
+
+                # 校验签名
+                # sign = request_args.pop("sign")
+                # if sign != wx_sign(request_args):
+                #     raise PlException("校验签名失败")
+
+                # 验证交易金额
+                # if Decimal(request_args["total_fee"]) != Decimal(str(transaction["amount"])) * Decimal("100"):
+                #     raise PlException("支付金额不对应")
+
+                # 交易成功
+                transaction.wx_transaction_id = request_args["transaction_id"]
+                transaction.state = TransactionNonOrder.STATE_FINISH
+                transaction.description = "支付成功"
+                # 更新账户
+                account = session.query(Account).filter(Account.user_id == transaction.user_id).one()
+                account.amount -= transaction.amount
+
+                # 生成消息
+                message = Message(user_id=transaction.user_id, title="提现已完成",
+                                  context="提现已完成，金额%s元已打入指定账户，目前账号余额%s元！" % (
+                                  transaction.amount.__str__(), account.amount.__str__()),
+                                  state=Message.STATE_UNREAD)
+                session.add(message)
+
+            self.response()
+        except ParameterInvalidException as e:
+            logger.exception()
+            self.response_error("参数格式校验错误:%s" % e)
+        except Exception as e:
+            logger.exception()
+            self.response_error(e)
