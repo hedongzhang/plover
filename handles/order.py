@@ -343,23 +343,22 @@ class CalculateHandler(BasicHandler):
     def get(self):
         try:
             session_id = self.get_argument("session_id")
-            # user_id = self.get_argument("user_id")
+            user_id = self.get_argument("user_id")
             count = self.get_argument("count")
 
             with open_session() as session:
                 amount_per_order = session.query(Config).filter(Config.key == "amount_per_order").one()
-                # account = session.query(Account).filter(Account.user_id == user_id).one()
+                account = session.query(Account).filter(Account.user_id == user_id).one()
 
                 amount = Decimal(amount_per_order.value) * Decimal(count)
-                # if account.amount >= amount:
-                #     balance = amount
-                #     wx_amount = 0
-                # else:
-                #     balance = account.amount
-                #     wx_amount = amount - account.amount
+                if account.amount >= amount:
+                    balance = amount
+                    wx_amount = 0
+                else:
+                    balance = account.amount
+                    wx_amount = amount - account.amount
 
-                # data = dict(amount=float(amount), balance=balance, wx_amount=wx_amount)
-                data = dict(amount=float(amount))
+                data = dict(amount=amount.__str__(), balance=balance.__str__(), wx_amount=wx_amount.__str__())
 
             self.response(data)
         except ParameterInvalidException as e:
