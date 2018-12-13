@@ -662,18 +662,22 @@ class AcceptHandler(BasicHandler):
                     order.state = Order.STATE_DISTRIBUTION
                     order.distribution_time = datetime.now()
 
+                    master_user = session.query(User).filter(User.id == order.master_id).one()
+                    master_user_msg = "雇主"
+                    if master_user.first_name:
+                        master_user_msg = "雇主%s同学" % master_user.first_name
+
                     # 调用短信接口，发送短信通知
                     try:
-                        master_user = session.query(User).filter(User.id == order.master_id).one()
                         yield executor.submit(sms.send_message, business_id=self.session_id,
                                               phone_numbers=user.phone,
-                                              message="雇主%s同学的订单已到达取货点，请及时领取！" % master_user.first_name)
+                                              message="%s的订单已到达取货点，请及时领取！" % master_user_msg)
                     except Exception as e:
                         logger.warn("send sms failed! :%s" % e)
 
                     # 生成消息
-                    message = Message(user_id=order.slave_id, title="雇主%s同学的订单已到达取货点" % master_user.first_name,
-                                      context="雇主%s同学的订单已到达取货点，请及时领取！" % master_user.first_name,
+                    message = Message(user_id=order.slave_id, title="%s的订单已到达取货点" % master_user_msg,
+                                      context="%s的订单已到达取货点，请及时领取！" % master_user_msg,
                                       state=Message.STATE_UNREAD)
                     session.add(message)
 
@@ -727,15 +731,23 @@ class ArriveHandler(BasicHandler):
                     # 调用短信接口，发送短信通知
                     try:
                         slave_user = session.query(User).filter(User.id == order.slave_id).one()
+
+                        master_user_msg = "雇主"
+                        if user.first_name:
+                            master_user_msg = "雇主%s同学" % user.first_name
                         yield executor.submit(sms.send_message, business_id=self.session_id,
                                               phone_numbers=slave_user.phone,
-                                              message="雇主%s同学的订单已到达取货点，请及时领取！" % user.first_name)
+                                              message="%s的订单已到达取货点，请及时领取！" % master_user_msg)
                     except Exception as e:
                         logger.warn("send sms failed! :%s" % e)
 
                     # 生成消息
-                    message = Message(user_id=order.slave_id, title="雇主%s同学的订单已到达取货点" % user.first_name,
-                                      context="雇主%s同学的订单已到达取货点，请及时领取！" % user.first_name,
+                    master_first_name = "雇主"
+                    if user.first_name:
+                        master_first_name = "雇主%s同学"
+
+                    message = Message(user_id=order.slave_id, title="%s的订单已到达取货点" % master_first_name,
+                                      context="%s的订单已到达取货点，请及时领取！" % master_first_name,
                                       state=Message.STATE_UNREAD)
                     session.add(message)
 
