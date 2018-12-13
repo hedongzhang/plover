@@ -394,14 +394,14 @@ class SuggestHandler(BasicHandler):
                 orders = session.query(Order).filter(Order.state == Order.STATE_NOORDER).all()
                 for order in orders:
                     takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
-                    address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
+                    recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
 
-                    if user.gender == User.GENDER_MALE and address.property != Address.PROPERTY_FEMALE:
-                        unorders[order.id] = (address.latitude, address.longitude)
-                    elif user.gender == User.GENDER_FEMALE and address.property != Address.PROPERTY_MALE:
-                        unorders[order.id] = (address.latitude, address.longitude)
-                    elif user.gender == User.GENDER_UNKNOWN and address.property != Address.PROPERTY_FEMALE and address.property != Address.PROPERTY_MALE:
-                        unorders[order.id] = (address.latitude, address.longitude)
+                    if user.gender == User.GENDER_MALE and recive_address.property != Address.PROPERTY_FEMALE:
+                        unorders[order.id] = (recive_address.latitude, recive_address.longitude)
+                    elif user.gender == User.GENDER_FEMALE and recive_address.property != Address.PROPERTY_MALE:
+                        unorders[order.id] = (recive_address.latitude, recive_address.longitude)
+                    elif user.gender == User.GENDER_UNKNOWN and recive_address.property != Address.PROPERTY_FEMALE and recive_address.property != Address.PROPERTY_MALE:
+                        unorders[order.id] = (recive_address.latitude, recive_address.longitude)
 
             data["count"] = len(unorders)
             data["order_list"] = list()
@@ -579,7 +579,7 @@ class CancleHandler(BasicHandler):
                         raise ParameterInvalidException("雇主无法取消此订单")
                 elif order.slave_id and user_id == order.slave_id:
                     if order.state != Order.STATE_ORDERS:
-                        raise ParameterInvalidException("佣兵无法取消此订单")
+                        raise ParameterInvalidException("无法取消此订单")
                 else:
                     raise PlException("无效的用户id")
 
@@ -615,7 +615,7 @@ class CancleHandler(BasicHandler):
                                           state=Message.STATE_UNREAD)
                     session.add(message)
                 elif user_id == order.slave_id:
-                    message = Message(user_id=order.slave_id, title="订单已取消", context="非常抱歉，订单已被佣兵取消",
+                    message = Message(user_id=order.slave_id, title="订单已取消", context="非常抱歉，订单已被取消",
                                       state=Message.STATE_UNREAD)
                     session.add(message)
 
@@ -646,12 +646,12 @@ class AcceptHandler(BasicHandler):
                     raise PlException("此用户不存在")
                 order = session.query(Order).filter(Order.id == order_id).one_or_none()
                 if not order:
-                    raise ParameterInvalidException("此订单不存在")
+                    raise PlException("此订单不存在")
 
                 if user.state != User.STATE_CERTIFICATION:
-                    raise ParameterInvalidException("用户账户未认证或已冻结，无法接单")
+                    raise PlException("用户账户未认证或已冻结，无法接单")
                 if user_id == order.master_id:
-                    raise ParameterInvalidException("雇主无法接自己发的订单")
+                    raise PlException("雇主无法接自己发的订单")
 
                 # 接单
                 order.slave_id = user_id
@@ -679,8 +679,8 @@ class AcceptHandler(BasicHandler):
 
                     # UNORDERS.pop(order.id)
 
-                message = Message(user_id=order.master_id, title="佣兵%s同学已接单" % user.first_name,
-                                  context="佣兵%s同学已接单，请耐心等待送达" % user.first_name,
+                message = Message(user_id=order.master_id, title="%s同学已接单" % user.first_name,
+                                  context="%s同学已接单，请耐心等待送达" % user.first_name,
                                   state=Message.STATE_UNREAD)
                 session.add(message)
 
@@ -799,7 +799,7 @@ class FinishHandler(BasicHandler):
 
                 # 生成消息
                 message = Message(user_id=order.master_id, title="订单已完成",
-                                  context="佣兵%s同学已将外卖送达，用餐愉快！" % user.first_name,
+                                  context="%s同学已将外卖送达，用餐愉快！" % user.first_name,
                                   state=Message.STATE_UNREAD)
                 session.add(message)
 
