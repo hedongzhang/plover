@@ -397,17 +397,17 @@ class SuggestHandler(BasicHandler):
                     recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
 
                     if user.gender == User.GENDER_MALE and recive_address.property != Address.PROPERTY_FEMALE:
-                        unorders[order.id] = (recive_address.latitude, recive_address.longitude)
+                        unorders[order.id] = [recive_address.latitude, recive_address.longitude]
                     elif user.gender == User.GENDER_FEMALE and recive_address.property != Address.PROPERTY_MALE:
-                        unorders[order.id] = (recive_address.latitude, recive_address.longitude)
+                        unorders[order.id] = [recive_address.latitude, recive_address.longitude]
                     elif user.gender == User.GENDER_UNKNOWN and recive_address.property != Address.PROPERTY_FEMALE and recive_address.property != Address.PROPERTY_MALE:
-                        unorders[order.id] = (recive_address.latitude, recive_address.longitude)
+                        unorders[order.id] = [recive_address.latitude, recive_address.longitude]
 
             data["count"] = len(unorders)
             data["order_list"] = list()
 
             if latitude and longitude:
-                temp_orders = {k: ((float(latitude) - v[0]) ** 2) + ((float(longitude) - v[1]) ** 2) for k, v in
+                temp_orders = {k: (abs(float(latitude) - v[0]) ** 2) + (abs(float(longitude) - v[1]) ** 2) for k, v in
                                unorders.items()}
                 sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
                 sort_orders = sort_orders[offset:offset + limit]
@@ -662,10 +662,8 @@ class AcceptHandler(BasicHandler):
                     order.state = Order.STATE_DISTRIBUTION
                     order.distribution_time = datetime.now()
 
-                    master_user = session.query(User).filter(User.id == order.master_id).one()
-                    master_user_msg = "雇主"
-                    if master_user.first_name:
-                        master_user_msg = "雇主%s同学" % master_user.first_name
+                    recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
+                    master_user_msg = "雇主%s同学" % recive_address.first_name
 
                     # 调用短信接口，发送短信通知
                     try:
@@ -728,13 +726,12 @@ class ArriveHandler(BasicHandler):
                     order.state = Order.STATE_DISTRIBUTION
                     order.distribution_time = datetime.now()
 
+                    recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
+                    master_user_msg = "雇主%s同学" % recive_address.first_name
+
                     # 调用短信接口，发送短信通知
                     try:
                         slave_user = session.query(User).filter(User.id == order.slave_id).one()
-
-                        master_user_msg = "雇主"
-                        if user.first_name:
-                            master_user_msg = "雇主%s同学" % user.first_name
                         yield executor.submit(sms.send_message, business_id=self.session_id,
                                               phone_numbers=slave_user.phone,
                                               message="%s的订单已到达取货点，请及时领取！" % master_user_msg)
@@ -742,12 +739,8 @@ class ArriveHandler(BasicHandler):
                         logger.warn("send sms failed! :%s" % e)
 
                     # 生成消息
-                    master_first_name = "雇主"
-                    if user.first_name:
-                        master_first_name = "雇主%s同学"
-
-                    message = Message(user_id=order.slave_id, title="%s的订单已到达取货点" % master_first_name,
-                                      context="%s的订单已到达取货点，请及时领取！" % master_first_name,
+                    message = Message(user_id=order.slave_id, title="%s的订单已到达取货点" % master_user_msg,
+                                      context="%s的订单已到达取货点，请及时领取！" % master_user_msg,
                                       state=Message.STATE_UNREAD)
                     session.add(message)
 
