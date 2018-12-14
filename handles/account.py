@@ -49,7 +49,10 @@ class AccountHandler(BasicHandler):
                     unfinish_withdraw_amount += unfinish_withdraw_order.amount
                 data["withdraw_amount"] = (account.amount - unfinish_withdraw_amount).__str__()
 
-                data["deposit"] = account.deposit.__str__()
+                data["deposit_amount"] = account.deposit.__str__()
+                data["deposit"] = False
+                if account.deposit > Decimal("0.00"):
+                    data["deposit"] = True
                 data["state"] = account.state
                 data["description"] = account.description
                 data["update_time"] = account.update_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -139,7 +142,7 @@ class DepositHandler(BasicHandler):
                     appid=config.get("appid"),
                     mch_id=config.get("mch_id"),
                     nonce_str=transaction_id,
-                    body="deposit",
+                    body="悠拿押金",
                     out_trade_no=transaction_id,
                     total_fee=total_fee.__str__(),
                     spbill_create_ip=self.request.remote_ip,
@@ -297,10 +300,10 @@ class WithdrawHandler(BasicHandler):
                 session.flush()
 
                 # 生成消息
-                message = Message(user_id=user_id, title="提现",
-                                  context="提现请求已确认，等待到账",
-                                  state=Message.STATE_UNREAD)
-                session.add(message)
+                # message = Message(user_id=user_id, title="提现",
+                #                   context="提现请求已确认，等待到账",
+                #                   state=Message.STATE_UNREAD)
+                # session.add(message)
 
             self.response()
         except ParameterInvalidException as e:
@@ -354,11 +357,11 @@ class WithdrawCallbackHandler(CallbackHandler):
                 account.amount -= transaction.amount
 
                 # 生成消息
-                message = Message(user_id=transaction.user_id, title="提现已完成",
-                                  context="提现已完成，金额%s元已打入指定账户，目前账号余额%s元！" % (
-                                  transaction.amount.__str__(), account.amount.__str__()),
-                                  state=Message.STATE_UNREAD)
-                session.add(message)
+                # message = Message(user_id=transaction.user_id, title="提现已完成",
+                #                   context="提现已完成，金额%s元已打入指定账户，目前账号余额%s元！" % (
+                #                   transaction.amount.__str__(), account.amount.__str__()),
+                #                   state=Message.STATE_UNREAD)
+                # session.add(message)
 
             self.response()
         except ParameterInvalidException as e:
