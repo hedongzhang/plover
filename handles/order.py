@@ -400,7 +400,7 @@ class SuggestHandler(BasicHandler):
                         unorders[order.id] = [recive_address.latitude, recive_address.longitude]
                     elif user.gender == User.GENDER_FEMALE and recive_address.property != Address.PROPERTY_MALE:
                         unorders[order.id] = [recive_address.latitude, recive_address.longitude]
-                    elif user.gender == User.GENDER_UNKNOWN and recive_address.property != Address.PROPERTY_FEMALE and recive_address.property != Address.PROPERTY_MALE:
+                    elif user.gender == User.GENDER_UNKNOWN:
                         unorders[order.id] = [recive_address.latitude, recive_address.longitude]
 
             data["count"] = len(unorders)
