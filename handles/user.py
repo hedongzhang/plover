@@ -11,6 +11,7 @@ Description:
 """
 
 import json
+from decimal import Decimal
 
 from sqlalchemy import and_, or_
 
@@ -54,6 +55,9 @@ class UserHandler(BasicHandler):
                 data["avatar_url"] = user.avatar_url
                 data["phone"] = user.phone
                 data["state"] = user.state
+                data["deposit"] = False
+                if account.deposit > Decimal("0.00"):
+                    data["deposit"] = True
                 data["undone_order_count"] = undone_order_count
                 data["unread_message_count"] = unread_message_count
                 data["amount"] = account.amount.__str__()
@@ -78,7 +82,7 @@ class UserHandler(BasicHandler):
                 user.avatar_url = user_info["avatarUrl"]
                 user.gender = user_info["gender"]
 
-                user.description = "注册完成"
+                user.description = "已注册"
 
             self.response()
         except ParameterInvalidException as e:
@@ -104,7 +108,8 @@ class UserHandler(BasicHandler):
                 for attr in necessary_list[1:]:
                     user.__setattr__(attr, request_args[attr])
 
-                user.description = "已完善资料，等待缴纳押金"
+                user.state = User.STATE_CERTIFICATION
+                user.description = "已认证"
 
             self.response()
         except ParameterInvalidException as e:
@@ -148,6 +153,11 @@ class UsersHandler(BasicHandler):
                     user_info["first_name"] = user.first_name
                     user_info["last_name"] = user.last_name
                     user_info["state"] = user.state
+
+                    account = session.query(Account).filter(Account.id == user.account_id).one()
+                    user_info["deposit"] = False
+                    if account.deposit > Decimal("0.00"):
+                        user_info["deposit"] = True
                     user_info["phone"] = user.phone
                     data["user_list"].append(user_info)
 

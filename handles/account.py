@@ -94,26 +94,7 @@ class AccountHandler(BasicHandler):
             self.response_server_error(e)
 
     def post(self):
-        try:
-            necessary_list = ["user_id", "user_info", "raw_data", "signature", "encrypted_data", "iv"]
-            request_args = self.request_args(necessary_list=necessary_list)
-            user_info = json.loads(request_args["user_info"])
-
-            with open_session() as session:
-                user = session.query(User).filter(User.id == request_args["user_id"]).one()
-                user.nick_name = user_info["nick_name"]
-                user.avatar_url = user_info["avatarUrl"]
-                user.gender = user_info["gender"]
-
-                user.description = "注册完成"
-
-            self.response()
-        except ParameterInvalidException as e:
-            logger.exception()
-            self.response_request_error(e)
-        except Exception as e:
-            logger.exception()
-            self.response_server_error(e)
+        pass
 
 
 class DepositHandler(BasicHandler):
@@ -236,10 +217,6 @@ class DepositCallbackHandler(CallbackHandler):
                 # 更新账户
                 account = session.query(Account).filter(Account.user_id == transaction.user_id).one()
                 account.deposit += transaction.amount
-                # 更新用户状态
-                user = session.query(User).filter(User.id == transaction.user_id).one()
-                user.state = User.STATE_CERTIFICATION
-                user.description = "已认证"
 
             self.response()
         except ParameterInvalidException as e:
