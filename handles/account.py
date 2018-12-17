@@ -112,6 +112,10 @@ class DepositHandler(BasicHandler):
                 if not user:
                     raise ParameterInvalidException("用户不存在")
 
+                account = session.query(Account).filter(Account.id == user.account_id).one()
+                if account.deposit > Decimal("0.00"):
+                    raise PlException("用户已缴纳过押金！")
+
             transaction_id = random_tool.random_string()
 
             with open_session() as session:

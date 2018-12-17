@@ -80,7 +80,7 @@ class UserHandler(BasicHandler):
                 user = session.query(User).filter(User.id == request_args["user_id"]).one()
                 user.nick_name = user_info["nickName"]
                 user.avatar_url = user_info["avatarUrl"]
-                user.gender = user_info["gender"]
+                # user.gender = user_info["gender"]
 
                 user.description = "已注册"
 
