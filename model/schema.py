@@ -23,9 +23,9 @@ class User(Entity):
     """
     __tablename__ = "user"
 
-    GENDER_UNKNOWN = 0
+    GENDER_FEMALE = 0
     GENDER_MALE = 1
-    GENDER_FEMALE = 2
+    GENDER_UNKNOWN = 2
 
     STATUS_UNLOGIN = 0
     STATUS_LOGIN = 1
@@ -39,7 +39,7 @@ class User(Entity):
     account_id = Column(Integer, nullable=False, unique=True, comment="账户id, -1表示刚刚注册，在创建账户时中断")
     nick_name = Column(String(length=64), comment="昵称")
     avatar_url = Column(String(length=256), comment="头像URL")
-    gender = Column(Integer, nullable=False, comment="性别: 0-未知, 1-男, 2-女")
+    gender = Column(Integer, nullable=False, comment="性别: 0-女, 1-男, 2-未知")
     first_name = Column(String(length=64), comment="名")
     last_name = Column(String(length=64), comment="姓")
     phone = Column(String(length=16), comment="手机号")

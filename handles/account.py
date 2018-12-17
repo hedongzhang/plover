@@ -284,8 +284,8 @@ class WithdrawHandler(BasicHandler):
                 for unfinish_withdraw_order in unfinish_withdraw_orders:
                     unfinish_withdraw_amount += unfinish_withdraw_order.amount
 
-                if account.amount - unfinish_withdraw_amount < amount:
-                    raise PlException("余额不足，请确认金额是否正确")
+                # if account.amount - unfinish_withdraw_amount < amount:
+                #     raise PlException("余额不足，请确认金额是否正确")
 
                 transaction = TransactionNonOrder(
                     user_id=request_args["user_id"],

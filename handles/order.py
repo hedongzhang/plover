@@ -396,12 +396,15 @@ class SuggestHandler(BasicHandler):
                     takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
                     recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
 
-                    if user.gender == User.GENDER_MALE and recive_address.property != Address.PROPERTY_FEMALE:
+                    if user.state != User.STATE_CERTIFICATION:
                         unorders[order.id] = [recive_address.latitude, recive_address.longitude]
-                    elif user.gender == User.GENDER_FEMALE and recive_address.property != Address.PROPERTY_MALE:
-                        unorders[order.id] = [recive_address.latitude, recive_address.longitude]
-                    elif user.gender == User.GENDER_UNKNOWN:
-                        unorders[order.id] = [recive_address.latitude, recive_address.longitude]
+                    else:
+                        if user.gender == User.GENDER_MALE and recive_address.property != Address.PROPERTY_FEMALE:
+                            unorders[order.id] = [recive_address.latitude, recive_address.longitude]
+                        elif user.gender == User.GENDER_FEMALE and recive_address.property != Address.PROPERTY_MALE:
+                            unorders[order.id] = [recive_address.latitude, recive_address.longitude]
+                        elif user.gender == User.GENDER_UNKNOWN:
+                            unorders[order.id] = [recive_address.latitude, recive_address.longitude]
 
             data["count"] = len(unorders)
             data["order_list"] = list()

@@ -97,12 +97,17 @@ class UserHandler(BasicHandler):
             necessary_list = ["user_id", "school", "first_name", "last_name", "phone", "verification_code", "gender",
                               "id_number", "id_photo_path"]
             request_args = self.request_args(necessary_list=necessary_list)
+            data = dict()
 
             with open_session() as session:
                 verification = session.query(Verification).filter(
                     Verification.phone == request_args["phone"]).one_or_none()
                 if not verification or verification.verification_code != request_args["verification_code"]:
                     raise PlException("验证码校验失败，请检查手机验证码")
+
+                user = session.query(User).filter(User.id_number == request_args["id_number"]).one_or_none()
+                if user:
+                    raise PlException("身份证号码与已注册用户重复，请确认填写正确的身份证号码！")
 
                 user = session.query(User).filter(User.id == request_args["user_id"]).one()
                 for attr in necessary_list[1:]:
@@ -111,7 +116,15 @@ class UserHandler(BasicHandler):
                 user.state = User.STATE_CERTIFICATION
                 user.description = "已认证"
 
-            self.response()
+                data["id"] = user.id
+                data["state"] = user.state
+
+                account = session.query(Account).filter(Account.id == user.account_id).one()
+                data["deposit"] = False
+                if account.deposit > Decimal("0.00"):
+                    data["deposit"] = True
+
+            self.response(data)
         except ParameterInvalidException as e:
             logger.exception()
             self.response_request_error(e)
