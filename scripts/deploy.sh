@@ -37,6 +37,7 @@ yum-config-manager --enable mysql57-community
 yum install mysql-community-server -y
 mkdir /storage/database/data -p
 chown mysql:mysql /storage/database/ -R
+cp /root/plover/conf/my.cnf /etc/my.cnf
 systemctl start mysqld
 # grep 'temporary password' /storage/database/mysqld.log
 # mysql -uroot -p
@@ -44,6 +45,15 @@ systemctl start mysqld
 # create database polver
 
 # 手动安装plover
+cd $INSTALL_PATH
+tar xzf plover.tgz
+tar xzf ./plover/env/plover-env.tgz
+mv ./plover /root/plover
+mv ./plover-env /root/plover-env
+echo "source /root/plover-env/bin/activate
+export PYTHONPATH=/root/plover" >> /root/.bash_profile
+source /root/.bash_profile
+
 mkdir /storage/static
 mkdir /storage/upload
 mkdir /storage/upload/identify
