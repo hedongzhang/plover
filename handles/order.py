@@ -651,6 +651,9 @@ class AcceptHandler(BasicHandler):
                 if not order:
                     raise PlException("此订单不存在")
 
+                if order.state != Order.STATE_NOORDER:
+                    raise PlException("此订单已被其他佣兵接单")
+
                 if user.state != User.STATE_CERTIFICATION:
                     raise PlException("用户账户未认证或已冻结，无法接单")
                 if user_id == order.master_id:

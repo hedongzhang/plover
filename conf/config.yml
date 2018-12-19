@@ -15,7 +15,7 @@ static_path: "/storage/static"
 ############
 # DATABASE #
 ############
-engine_str: "mysql+mysqlconnector://root:ploverpassword@localhost:3306/plover"
+engine_str: "mysql+mysqlconnector://root:Plover!Password1@localhost:3306/plover"
 
 
 ###########
