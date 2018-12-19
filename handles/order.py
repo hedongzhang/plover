@@ -647,7 +647,7 @@ class AcceptHandler(BasicHandler):
                 user = session.query(User).filter(User.id == user_id).one_or_none()
                 if not user:
                     raise PlException("此用户不存在")
-                order = session.query(Order).filter(Order.id == order_id).one_or_none()
+                order = session.query(Order).filter(Order.id == order_id).with_for_update().one_or_none()
                 if not order:
                     raise PlException("此订单不存在")
 

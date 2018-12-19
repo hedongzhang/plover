@@ -6,8 +6,8 @@ https_listen_port: 443
 
 max_body_size: 10485760
 
-certfile: "./conf/server.crt"
-keyfile: "./conf/server.key"
+certfile: "./conf/www.yona.vip.crt"
+keyfile: "./conf/www.youna.vip.key"
 
 static_path: "/storage/static"
 
