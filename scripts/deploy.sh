@@ -17,16 +17,14 @@ rm $INSTALL_PATH
 mkdir $INSTALL_PATH
 
 # 安装基础包
-yum install yum-utils screen zlib* pip -y
+yum install yum-utils screen zlib* pip unzip -y
 
 # 安装Python3
 cd $INSTALL_PATH
 wget https://www.python.org/ftp/python/3.6.6/Python-3.6.6.tgz
 tar xzf Python-3.6.6.tgz
 cd $INSTALL_PATH/Python-3.6.6
-#python3兼容ssl需要解注释205行为: _socket socketmodule.c
-sed -i "s/#_socket socketmodule.c/_socket socketmodule.c/g" Modules/Setup.dist
-./configure && make && make install
+./configure -with-ssl && make && make install
 
 # 手动安装mysql
 cd $INSTALL_PATH
