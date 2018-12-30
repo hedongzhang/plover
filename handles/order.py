@@ -588,8 +588,6 @@ class CancleHandler(BasicHandler):
 
                 # 取消订单
                 order.state = Order.STATE_CANCEL
-                if "description" in request_args:
-                    order.description = request_args["description"]
                 # 订单金额和小费退至个人账户
                 account = session.query(Account).filter(Account.id == user.account_id).one()
                 account.amount += order.amount + order.tip

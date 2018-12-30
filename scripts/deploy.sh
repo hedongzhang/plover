@@ -52,7 +52,7 @@ echo "source /root/plover-env/bin/activate
 export PYTHONPATH=/root/plover" >> /root/.bash_profile
 source /root/.bash_profile
 
-mkdir /storage/static
-mkdir /storage/upload
-mkdir /storage/upload/identify
-mkdir /storage/upload/suggestion
+mkdir /storage/static -p
+mkdir /storage/upload -p
+mkdir /storage/upload/identify -p
+mkdir /storage/upload/suggestion -p
