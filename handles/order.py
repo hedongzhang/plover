@@ -391,6 +391,8 @@ class SuggestHandler(BasicHandler):
                 if not user:
                     raise PlException("此用户不存在")
 
+                distance_limit = int(session.query(Config).filter(Config.key == "distance_limit").one().value)
+
                 orders = session.query(Order).filter(Order.state == Order.STATE_NOORDER).all()
                 for order in orders:
                     takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
@@ -410,8 +412,18 @@ class SuggestHandler(BasicHandler):
             data["order_list"] = list()
 
             if latitude and longitude:
-                temp_orders = {k: (abs(float(latitude) - v[0]) ** 2) + (abs(float(longitude) - v[1]) ** 2) for k, v in
-                               unorders.items()}
+                to_addresses = [dict(lat=v[0], lon=v[1]) for k, v in unorders.items()]
+                distances = yield executor.submit(map_tx.get_distance, from_lat=latitude, from_lon=longitude,
+                                                 to_locations=to_addresses)
+
+                count = 0
+                temp_orders = dict()
+
+                for k, v in unorders.items():
+                    if distances[count] < distance_limit:
+                        temp_orders[k] = distances[count]
+                    count += 1
+                data["count"] = len(temp_orders)
                 sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
                 sort_orders = sort_orders[offset:offset + limit]
             else:
@@ -425,10 +437,11 @@ class SuggestHandler(BasicHandler):
                         commission = ((order.amount + order.tip) * Decimal(str(draw_cratio.value))).quantize(
                             Decimal('0.00'))
 
-                        takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
-                        address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
-                        distance = yield executor.submit(map_tx.get_distance, from_lat=latitude, from_lon=longitude,
-                                                         to_lat=address.latitude, to_lon=address.longitude)
+                        if sort_order[1] < 1000:
+                            distance = "%sm" % sort_order[1]
+                        else:
+                            distance_str = (Decimal(str(sort_order[1])) / Decimal("1000")).quantize(Decimal('0.00'))
+                            distance = "%skm" % distance_str
 
                         order_info = dict()
                         order_info["id"] = order.id

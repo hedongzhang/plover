@@ -15,10 +15,11 @@ from utiles import httpclient
 from conf import config
 
 
-def get_distance(from_lat, from_lon, to_lat, to_lon):
+def get_distance(from_lat, from_lon, to_locations):
+    to_locations = [("%s,%s" % (i["lat"], i["lon"])) for i in to_locations]
     args = {
         "from": ",".join([str(from_lat), str(from_lon)]),
-        "to": ",".join([str(to_lat), str(to_lon)]),
+        "to": ";".join(to_locations),
         "key": config.get("map_key_tx")
     }
 
@@ -26,9 +27,5 @@ def get_distance(from_lat, from_lon, to_lat, to_lon):
     if response["status"] != 0:
         raise Exception("request map server failed status:%s message:%s" % (response["status"], response["message"]))
     else:
-        distance = response["result"]["elements"][0]["distance"]
-        if distance < 1000:
-            return "%sm" % distance
-        else:
-            distance_str = (Decimal(str(distance)) / Decimal("1000")).quantize(Decimal('0.00'))
-            return "%skm" % distance_str
+        distance = [i["distance"] for i in response["result"]["elements"]]
+        return distance

@@ -28,6 +28,7 @@ def add_system_config():
         amount_per_order="2",
         draw_cratio="0.2",
         deposit="20",
+        distance_limit="3000",
         # 文案
         master_title="这次，不需要自己拿",
         master_desc="即使再忙，也别太累",
