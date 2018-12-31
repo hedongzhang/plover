@@ -396,17 +396,17 @@ class SuggestHandler(BasicHandler):
                 orders = session.query(Order).filter(Order.state == Order.STATE_NOORDER).all()
                 for order in orders:
                     takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
-                    recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
+                    tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
 
                     if user.state != User.STATE_CERTIFICATION:
-                        unorders[order.id] = [recive_address.latitude, recive_address.longitude]
+                        unorders[order.id] = [tack_address.latitude, tack_address.longitude]
                     else:
-                        if user.gender == User.GENDER_MALE and recive_address.property != Address.PROPERTY_FEMALE:
-                            unorders[order.id] = [recive_address.latitude, recive_address.longitude]
-                        elif user.gender == User.GENDER_FEMALE and recive_address.property != Address.PROPERTY_MALE:
-                            unorders[order.id] = [recive_address.latitude, recive_address.longitude]
+                        if user.gender == User.GENDER_MALE and tack_address.property != Address.PROPERTY_FEMALE:
+                            unorders[order.id] = [tack_address.latitude, tack_address.longitude]
+                        elif user.gender == User.GENDER_FEMALE and tack_address.property != Address.PROPERTY_MALE:
+                            unorders[order.id] = [tack_address.latitude, tack_address.longitude]
                         elif user.gender == User.GENDER_UNKNOWN:
-                            unorders[order.id] = [recive_address.latitude, recive_address.longitude]
+                            unorders[order.id] = [tack_address.latitude, tack_address.longitude]
 
             data["count"] = len(unorders)
             data["order_list"] = list()
