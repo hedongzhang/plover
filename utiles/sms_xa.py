@@ -55,7 +55,7 @@ def send_sms(phone_numbers, message):
 
 
 def send_verification_code(business_id, phone_numbers, code):
-    message = "您的验证码：%s，您正进行身份验证，打死不告诉别人！" % code
+    message = "验证码：%s，请您在5分钟内填写，如非本人操作，请忽略此短信。" % code
     send_sms(phone_numbers, message)
 
 

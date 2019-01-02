@@ -414,7 +414,7 @@ class SuggestHandler(BasicHandler):
             if latitude and longitude:
                 to_addresses = [dict(lat=v[0], lon=v[1]) for k, v in unorders.items()]
                 distances = yield executor.submit(map_tx.get_distance, from_lat=latitude, from_lon=longitude,
-                                                 to_locations=to_addresses)
+                                                  to_locations=to_addresses)
 
                 count = 0
                 temp_orders = dict()
@@ -675,11 +675,11 @@ class AcceptHandler(BasicHandler):
                 order.state = Order.STATE_ORDERS
                 order.order_time = datetime.now()
                 takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+                recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
                 if takeaway.state == Takeaway.STATE_ARRIVE:
                     order.state = Order.STATE_DISTRIBUTION
                     order.distribution_time = datetime.now()
 
-                    recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
                     master_user_msg = "雇主%s同学" % recive_address.first_name
 
                     # 调用短信接口，发送短信通知
@@ -702,6 +702,14 @@ class AcceptHandler(BasicHandler):
                                   context="%s同学已接单，请耐心等待送达" % user.first_name,
                                   state=Message.STATE_UNREAD)
                 session.add(message)
+
+                # 调用短信接口，发送短信通知
+                try:
+                    yield executor.submit(sms.send_message, business_id=self.session_id,
+                                          phone_numbers=recive_address.phone,
+                                          message="%s同学已接单，查看订单状态，点击我的，进入我的订单查看" % user.first_name)
+                except Exception as e:
+                    logger.warn("send sms failed! :%s" % e)
 
             self.response()
         except ParameterInvalidException as e:
