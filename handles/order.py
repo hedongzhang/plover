@@ -411,72 +411,74 @@ class SuggestHandler(BasicHandler):
             data["count"] = len(unorders)
             data["order_list"] = list()
 
-            if latitude and longitude:
-                to_addresses = [dict(lat=v[0], lon=v[1]) for k, v in unorders.items()]
-                distances = yield executor.submit(map_tx.get_distance, from_lat=latitude, from_lon=longitude,
+            if unorders:
+
+                if latitude and longitude:
+                    to_addresses = [dict(lat=v[0], lon=v[1]) for k, v in unorders.items()]
+                    distances = yield executor.submit(map_tx.get_distance, from_lat=latitude, from_lon=longitude,
                                                   to_locations=to_addresses)
 
-                count = 0
-                temp_orders = dict()
+                    count = 0
+                    temp_orders = dict()
 
-                for k, v in unorders.items():
-                    if distances[count] < distance_limit:
-                        temp_orders[k] = distances[count]
-                    count += 1
-                data["count"] = len(temp_orders)
-                sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
-                sort_orders = sort_orders[offset:offset + limit]
-            else:
-                raise PlException("经纬度必传")
+                    for k, v in unorders.items():
+                        if distances[count] < distance_limit:
+                             temp_orders[k] = distances[count]
+                        count += 1
+                    data["count"] = len(temp_orders)
+                    sort_orders = sorted(temp_orders.items(), key=lambda x: x[1])
+                    sort_orders = sort_orders[offset:offset + limit]
+                else:
+                    raise PlException("经纬度必传")
 
-            with open_session() as session:
-                for sort_order in sort_orders:
-                    order = session.query(Order).filter(Order.id == sort_order[0]).one_or_none()
-                    if order:
-                        draw_cratio = session.query(Config).filter(Config.key == "draw_cratio").one()
-                        commission = ((order.amount + order.tip) * Decimal(str(draw_cratio.value))).quantize(
-                            Decimal('0.00'))
+                with open_session() as session:
+                    for sort_order in sort_orders:
+                        order = session.query(Order).filter(Order.id == sort_order[0]).one_or_none()
+                        if order:
+                            draw_cratio = session.query(Config).filter(Config.key == "draw_cratio").one()
+                            commission = ((order.amount + order.tip) * Decimal(str(draw_cratio.value))).quantize(
+                                Decimal('0.00'))
 
-                        if sort_order[1] < 1000:
-                            distance = "%sm" % sort_order[1]
-                        else:
-                            distance_str = (Decimal(str(sort_order[1])) / Decimal("1000")).quantize(Decimal('0.00'))
-                            distance = "%skm" % distance_str
+                            if sort_order[1] < 1000:
+                                distance = "%sm" % sort_order[1]
+                            else:
+                                distance_str = (Decimal(str(sort_order[1])) / Decimal("1000")).quantize(Decimal('0.00'))
+                                distance = "%skm" % distance_str
 
-                        order_info = dict()
-                        order_info["id"] = order.id
-                        order_info["state"] = order.state
-                        order_info["amount"] = order.amount.__str__()
-                        order_info["tip"] = order.tip.__str__()
-                        order_info["total_amount"] = (order.tip + order.amount - commission).__str__()
-                        order_info["distance"] = distance
-                        order_info["count"] = takeaway.count
+                            order_info = dict()
+                            order_info["id"] = order.id
+                            order_info["state"] = order.state
+                            order_info["amount"] = order.amount.__str__()
+                            order_info["tip"] = order.tip.__str__()
+                            order_info["total_amount"] = (order.tip + order.amount - commission).__str__()
+                            order_info["distance"] = distance
+                            order_info["count"] = takeaway.count
 
-                        order_info["master_id"] = order.master_id
-                        order_info["slave_id"] = order.slave_id
+                            order_info["master_id"] = order.master_id
+                            order_info["slave_id"] = order.slave_id
 
-                        order_info["create_time"] = order.create_time.strftime("%Y-%m-%d %H:%M:%S")
-                        order_info["order_time"] = order.order_time.strftime("%Y-%m-%d %H:%M:%S")
-                        order_info["distribution_time"] = order.distribution_time.strftime("%Y-%m-%d %H:%M:%S")
-                        order_info["finish_time"] = order.finish_time.strftime("%Y-%m-%d %H:%M:%S")
-                        order_info["description"] = order.description
+                            order_info["create_time"] = order.create_time.strftime("%Y-%m-%d %H:%M:%S")
+                            order_info["order_time"] = order.order_time.strftime("%Y-%m-%d %H:%M:%S")
+                            order_info["distribution_time"] = order.distribution_time.strftime("%Y-%m-%d %H:%M:%S")
+                            order_info["finish_time"] = order.finish_time.strftime("%Y-%m-%d %H:%M:%S")
+                            order_info["description"] = order.description
 
-                        takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
-                        tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
-                        recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
+                            takeaway = session.query(Takeaway).filter(Takeaway.id == order.takeaway_id).one()
+                            tack_address = session.query(Address).filter(Address.id == takeaway.tack_address_id).one()
+                            recive_address = session.query(Address).filter(Address.id == takeaway.recive_address_id).one()
 
-                        order_info["tack_address"] = dict(
-                            first_address=tack_address.first_address,
-                            last_address=tack_address.last_address,
-                            shop_name=tack_address.shop_name
-                        )
-                        order_info["recive_address"] = dict(
-                            first_address=recive_address.first_address,
-                            last_address=recive_address.last_address,
-                            phone=recive_address.phone
-                        )
+                            order_info["tack_address"] = dict(
+                                first_address=tack_address.first_address,
+                                last_address=tack_address.last_address,
+                                shop_name=tack_address.shop_name
+                            )
+                            order_info["recive_address"] = dict(
+                                first_address=recive_address.first_address,
+                                last_address=recive_address.last_address,
+                                phone=recive_address.phone
+                            )
 
-                        data["order_list"].append(order_info)
+                            data["order_list"].append(order_info)
 
             self.response(data)
         except ParameterInvalidException as e:

@@ -16,6 +16,9 @@ from conf import config
 
 
 def get_distance(from_lat, from_lon, to_locations):
+    if not to_locations:
+        raise Exception("to_locations is empty")
+
     to_locations = [("%s,%s" % (i["lat"], i["lon"])) for i in to_locations]
     args = {
         "from": ",".join([str(from_lat), str(from_lon)]),
