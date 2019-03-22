@@ -36,6 +36,17 @@ def unifiedorder(args):
     return httpclient.post(url=config.get("unifiedorder_url"), args=args, format="xml")
 
 
+def transfers(args):
+    """
+    
+    :param args: 
+    :return: 
+    """
+    sign = wx_sign(args)
+    args["sign"] = sign
+    return httpclient.post_by_cert(url=config.get("transfers_url"), args=args, format="xml")
+
+
 def wx_sign(args_dict):
     key_list = sorted([key for key in args_dict.keys()])
     args_list = ["%s=%s" % (key, args_dict[key]) for key in key_list if args_dict[key]]

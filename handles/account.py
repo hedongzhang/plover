@@ -17,7 +17,7 @@ from tornado import gen
 
 from handles.base import BasicHandler, CallbackHandler, executor
 from handles.base import CALLBACK_RESPONSE_SUCCESS_CODE
-from handles.wx_api import unifiedorder, wx_sign
+from handles.wx_api import unifiedorder, transfers, wx_sign
 from model.base import open_session
 from model.schema import TransactionOrder, TransactionNonOrder, Account, User, Message
 from utiles.exception import ParameterInvalidException, PlException
@@ -87,6 +87,25 @@ class AccountHandler(BasicHandler):
                                                     TransactionOrder.TYPE_COLLECT]:
                         data["transaction_list"].append(transaction_info)
                 data["income"] = data["income"].__str__()
+
+                query = session.query(TransactionNonOrder).filter(TransactionNonOrder.user_id == user_id,
+                                                                  TransactionNonOrder.type == TransactionNonOrder.TYPE_WITHDRAW_CASH,
+                                                                  TransactionNonOrder.state == TransactionNonOrder.STATE_FINISH)
+                query = query.order_by(TransactionNonOrder.create_time.desc()).limit(config.get("query_num"))
+                on_order_transactions = query.all()
+                for transaction in on_order_transactions:
+                    transaction_info = dict()
+                    transaction_info["id"] = transaction.id
+                    transaction_info["order_id"] = 0
+                    transaction_info["wx_transaction_id"] = transaction.wx_transaction_id
+                    transaction_info["type"] = 4
+                    transaction_info["amount"] = transaction.amount.__str__()
+                    transaction_info["slave_amount"] = transaction.amount.__str__()
+                    transaction_info["is_income"] = True
+                    transaction_info["commission"] = 0
+                    transaction_info["description"] = transaction.description
+                    transaction_info["create_time"] = transaction.create_time.strftime("%Y-%m-%d %H:%M:%S")
+                    data["transaction_list"].append(transaction_info)
 
             self.response(data)
         except ParameterInvalidException as e:
@@ -268,6 +287,7 @@ class RedemptionHandler(BasicHandler):
 
 
 class WithdrawHandler(BasicHandler):
+    @gen.coroutine
     def post(self):
         try:
             necessary_list = ["user_id", "amount"]
@@ -278,18 +298,24 @@ class WithdrawHandler(BasicHandler):
             transaction_id = random_tool.random_string()
 
             with open_session() as session:
+                user = session.query(User).filter(User.id == user_id).one()
                 account = session.query(Account).filter(Account.user_id == user_id).one()
 
-                unfinish_withdraw_orders = session.query(TransactionNonOrder).filter(
+                abnormal_withdraw_orders = session.query(TransactionNonOrder).filter(
                     TransactionNonOrder.user_id == user_id,
-                    TransactionNonOrder.state == TransactionNonOrder.STATE_UNFINISH,
+                    TransactionNonOrder.state == TransactionNonOrder.STATE_ABNORMAL,
                     TransactionNonOrder.type == TransactionNonOrder.TYPE_WITHDRAW_CASH).all()
-                unfinish_withdraw_amount = Decimal("0.00")
-                for unfinish_withdraw_order in unfinish_withdraw_orders:
-                    unfinish_withdraw_amount += unfinish_withdraw_order.amount
+                abnormal_withdraw_amount = Decimal("0.00")
+                for abnormal_withdraw_order in abnormal_withdraw_orders:
+                    abnormal_withdraw_amount += abnormal_withdraw_order.amount
 
-                # if account.amount - unfinish_withdraw_amount < amount:
-                #     raise PlException("余额不足，请确认金额是否正确")
+                valid_withdraw_amount = account.amount - abnormal_withdraw_amount
+
+                if amount > account.amount:
+                    raise PlException("余额不足，请确认提现金额是否正确")
+                elif amount > valid_withdraw_amount:
+                    raise PlException("存在失败的提现请求，失败提现金额为:%s，剩余可提现金额为:%s，如有疑问请咨询客服处理" % (
+                        abnormal_withdraw_amount.__str__(), valid_withdraw_amount.__str__()))
 
                 transaction = TransactionNonOrder(
                     user_id=request_args["user_id"],
@@ -298,16 +324,58 @@ class WithdrawHandler(BasicHandler):
                     type=TransactionNonOrder.TYPE_WITHDRAW_CASH,
                     state=TransactionNonOrder.STATE_UNFINISH,
                     amount=amount,
-                    description="等待提现到账"
+                    description="发起提现"
                 )
-                session.add(transaction)
-                session.flush()
 
-                # 生成消息
-                # message = Message(user_id=user_id, title="提现",
-                #                   context="提现请求已确认，等待到账",
-                #                   state=Message.STATE_UNREAD)
-                # session.add(message)
+                # 调用微信企业付款接口
+                transfers_args = dict(
+                    mch_appid=config.get("appid"),
+                    mchid=config.get("mch_id"),
+                    nonce_str=transaction_id,
+                    partner_trade_no=transaction_id,
+                    openid=user.openid,
+                    check_name="NO_CHECK",
+                    amount=(Decimal(str(request_args["amount"])) * Decimal("100")).quantize(Decimal('0')).__str__(),
+                    desc="yona",
+                    spbill_create_ip=self.request.remote_ip
+                )
+
+                transfers_ret = yield executor.submit(transfers, args=transfers_args)
+
+                if transfers_ret["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    transaction.state = TransactionNonOrder.STATE_FAILED
+                    transaction.description = "调用微信企业付款接口失败！"
+                    session.add(transaction)
+                    session.commit()
+                    raise PlException("调用微信企业付款接口失败:%s" % transfers_ret["return_msg"])
+
+                if transfers_ret["result_code"] == CALLBACK_RESPONSE_SUCCESS_CODE:
+                    account.amount -= amount
+
+                    transaction.wx_transaction_id = transfers_ret["payment_no"]
+                    transaction.state = TransactionNonOrder.STATE_FINISH
+                    transaction.description = "提现成功！"
+                    session.add(transaction)
+
+                    # 生成消息
+                    message = Message(user_id=transaction.user_id, title="提现已完成",
+                                      context="提现已完成，金额%s元已打入指定账户，目前账号余额%s元！" % (
+                                          transaction.amount.__str__(), account.amount.__str__()),
+                                      state=Message.STATE_UNREAD)
+                    session.add(message)
+                else:
+                    if transfers_ret["err_code"] == "SYSTEMERROR":
+                        transaction.state = TransactionNonOrder.STATE_ABNORMAL
+                        transaction.description = "调用微信企业付款接口返回未知异常，需要人工确认交易是否成功！err_code:%s, err_code_des:%s" % (
+                            transfers_ret["err_code"], transfers_ret["err_code_des"])
+                    else:
+                        transaction.state = TransactionNonOrder.STATE_FAILED
+                        transaction.description = "调用微信企业付款接口返回异常！err_code:%s, err_code_des:%s" % (
+                            transfers_ret["err_code"], transfers_ret["err_code_des"])
+                        session.add(transaction)
+                    session.commit()
+                    raise PlException("调用微信企业付款接口返回异常:%s, err_code:%s, err_code_des:%s" % (
+                        transfers_ret["return_msg"], transfers_ret["err_code"], transfers_ret["err_code_des"]))
 
             self.response()
         except ParameterInvalidException as e:
@@ -335,22 +403,22 @@ class WithdrawCallbackHandler(CallbackHandler):
                     self.response()
                     return
 
-                # if request_args["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
-                #     transaction.wx_transaction_id = request_args["transaction_id"]
-                #     transaction.state = TransactionNonOrder.STATE_FAILED
-                #     transaction.description = "支付失败:%s" % request_args[
-                #         "return_msg"] if "return_msg" in request_args else ""
-                #     self.response()
-                #     return
+                if request_args["return_code"] != CALLBACK_RESPONSE_SUCCESS_CODE:
+                    transaction.wx_transaction_id = request_args["transaction_id"]
+                    transaction.state = TransactionNonOrder.STATE_FAILED
+                    transaction.description = "提现失败:%s" % request_args[
+                        "return_msg"] if "return_msg" in request_args else ""
+                    self.response()
+                    return
 
                 # 校验签名
-                # sign = request_args.pop("sign")
-                # if sign != wx_sign(request_args):
-                #     raise PlException("校验签名失败")
+                sign = request_args.pop("sign")
+                if sign != wx_sign(request_args):
+                    raise PlException("校验签名失败")
 
                 # 验证交易金额
-                # if Decimal(request_args["total_fee"]) != Decimal(str(transaction["amount"])) * Decimal("100"):
-                #     raise PlException("支付金额不对应")
+                if Decimal(request_args["total_fee"]) != Decimal(str(transaction["amount"])) * Decimal("100"):
+                    raise PlException("支付金额不对应")
 
                 # 交易成功
                 transaction.wx_transaction_id = request_args["transaction_id"]
@@ -361,11 +429,11 @@ class WithdrawCallbackHandler(CallbackHandler):
                 account.amount -= transaction.amount
 
                 # 生成消息
-                # message = Message(user_id=transaction.user_id, title="提现已完成",
-                #                   context="提现已完成，金额%s元已打入指定账户，目前账号余额%s元！" % (
-                #                   transaction.amount.__str__(), account.amount.__str__()),
-                #                   state=Message.STATE_UNREAD)
-                # session.add(message)
+                message = Message(user_id=transaction.user_id, title="提现已完成",
+                                  context="提现已完成，金额%s元已打入指定账户，目前账号余额%s元！" % (
+                                      transaction.amount.__str__(), account.amount.__str__()),
+                                  state=Message.STATE_UNREAD)
+                session.add(message)
 
             self.response()
         except ParameterInvalidException as e:

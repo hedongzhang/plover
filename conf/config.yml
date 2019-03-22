@@ -9,6 +9,9 @@ max_body_size: 10485760
 certfile: "./conf/www.yona.vip.pem"
 keyfile: "./conf/www.yona.vip.key"
 
+wx_certfile: "./conf/apiclient_cert.pem"
+wx_keyfile: "./conf/apiclient_key.pem"
+
 static_path: "/storage/static"
 
 
@@ -34,6 +37,7 @@ pay_key: "Gao123456789aaaa987654312ggwwwww"
 
 code2session_url: "https://api.weixin.qq.com/sns/jscode2session"
 unifiedorder_url: "https://api.mch.weixin.qq.com/pay/unifiedorder"
+transfers_url: "https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers"
 
 #########
 # MAP #
