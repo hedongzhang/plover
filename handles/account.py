@@ -101,11 +101,14 @@ class AccountHandler(BasicHandler):
                     transaction_info["type"] = 4
                     transaction_info["amount"] = transaction.amount.__str__()
                     transaction_info["slave_amount"] = transaction.amount.__str__()
-                    transaction_info["is_income"] = True
+                    transaction_info["is_income"] = False
                     transaction_info["commission"] = 0
                     transaction_info["description"] = transaction.description
                     transaction_info["create_time"] = transaction.create_time.strftime("%Y-%m-%d %H:%M:%S")
                     data["transaction_list"].append(transaction_info)
+
+            data["transaction_list"] = sorted(data["transaction_list"],
+                                              key=lambda transaction: transaction["create_time"], reverse=True)
 
             self.response(data)
         except ParameterInvalidException as e:
